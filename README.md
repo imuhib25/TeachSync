@@ -50,4 +50,4 @@ The app is designed to reduce paperwork and keep all tuition-related records org
 
 1. Clone the repository  
    ```bash
-   git clone https://github.com/your-username/TeachSync.git
+   git clone https://github.com/imuhib25/TeachSync.git
