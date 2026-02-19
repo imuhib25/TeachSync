@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Background Gradient -->
+    <path
+        android:pathData="M0,0 H360 V180 H0 Z"
+        android:fillColor="#151A2E"/>
+
+    <!-- Glow Fill -->
+    <path
+        android:pathData="
+            M0,120
+            C30,60 60,80 90,90
+            C120,100 150,60 180,80
+            C210,100 240,40 270,60
+            C300,80 330,40 360,60
+            L360,180 L0,180 Z"
+        android:fillColor="#446C7CFF"/>
+
+    <!-- Line Path -->
+    <path
+        android:pathData="
+            M0,120
+            C30,60 60,80 90,90
+            C120,100 150,60 180,80
+            C210,100 240,40 270,60
+            C300,80 330,40 360,60"
+        android:strokeColor="#6C7CFF"
+        android:strokeWidth="4"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+</vector>

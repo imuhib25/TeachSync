@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "699040988657",
+    "project_id": "teachsync-tuition",
+    "storage_bucket": "teachsync-tuition.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699040988657:android:3d922362f9087100545850",
+        "android_client_info": {
+          "package_name": "com.intisarmuhib.teachsync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDm3TFKMoU1s_B-zl4NRRqpM1nib5eQe2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

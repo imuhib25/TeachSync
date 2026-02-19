@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="16dp"
+    android:background="@drawable/item_row_click"
+    android:clickable="true"
+    android:focusable="true"
+    android:paddingVertical="6dp">
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/option_icon_bg"
+        android:padding="10dp"
+        android:src="@drawable/outline_shield_lock_24"
+        app:tint="#9AA4C7" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="14dp"
+        android:text="Login &amp; Security"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"/>
+
+    <ImageView
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:src="@drawable/outline_keyboard_arrow_right_24"
+        app:tint="#7E89B0" />
+
+</LinearLayout>
