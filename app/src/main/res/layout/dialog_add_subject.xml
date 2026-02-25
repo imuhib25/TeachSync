@@ -1,0 +1,44 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#0B1023">
+
+    <EditText
+        android:id="@+id/etSubjectName"
+        android:hint="Subject Name"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#8F9BFF"
+        android:backgroundTint="#6C7BFF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etSubjectCode"
+        android:hint="Subject Code"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#8F9BFF"
+        android:backgroundTint="#6C7BFF"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etSubjectTeacher"
+        android:hint="Teacher Name"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#8F9BFF"
+        android:backgroundTint="#6C7BFF"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnSave"
+        android:text="Save"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

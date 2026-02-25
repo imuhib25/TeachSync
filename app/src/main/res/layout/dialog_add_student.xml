@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Student"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/etStudentName"
+            android:hint="Student Full Name"
+            android:paddingStart="10dp"
+            android:textColor="@color/white"
+            android:background="@drawable/custom_edittext"
+            android:layout_width="match_parent"
+            android:textColorHint="#6B7280"
+            android:layout_height="50dp"
+            />
+
+        <EditText
+            android:id="@+id/etContact"
+            android:hint="Contact Number"
+            android:inputType="phone"
+            android:layout_marginTop="20dp"
+            android:paddingStart="10dp"
+            android:textColor="@color/white"
+            android:background="@drawable/custom_edittext"
+            android:layout_width="match_parent"
+            android:textColorHint="#6B7280"
+            android:layout_height="50dp"/>
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:hint="Email Address"
+            android:inputType="textEmailAddress"
+            android:paddingStart="10dp"
+            android:textColor="@color/white"
+            android:background="@drawable/custom_edittext"
+            android:layout_width="match_parent"
+            android:textColorHint="#6B7280"
+            android:layout_marginTop="20dp"
+            android:layout_height="50dp"/>
+
+        <EditText
+            android:id="@+id/etGuardian"
+            android:hint="Parent/Guardian Name"
+            android:layout_marginTop="20dp"
+            android:paddingStart="10dp"
+            android:textColor="@color/white"
+            android:background="@drawable/custom_edittext"
+            android:layout_width="match_parent"
+            android:textColorHint="#6B7280"
+            android:layout_height="50dp"/>
+
+        <Button
+            android:id="@+id/btnAddStudent"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Add Student"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button_gradient"
+            android:layout_marginTop="20dp"/>
+
+    </LinearLayout>
+</ScrollView>

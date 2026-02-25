@@ -1,201 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#0B1020"
+    android:background="@drawable/bg_manage_gradient"
     tools:context=".ManageFragment">
 
-    <!-- Main Content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
-        <!-- Header Row -->
+        <!-- 🔷 Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
-                android:text="Manage"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:fontFamily="@font/lexend_bold"
-                android:layout_weight="1"
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:fontFamily="@font/lexend_bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Control your academic system"
+                    android:textSize="14sp"
+                    android:textColor="#A0A8C0"
+                    android:fontFamily="@font/lexend"/>
+            </LinearLayout>
 
             <View
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/circle_bg" />
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/premium_circle_bg"/>
         </LinearLayout>
 
-        <!-- Cards -->
+
+        <!-- 🔷 Buttons Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="30dp">
 
             <!-- Add Students -->
-            <com.google.android.material.card.MaterialCardView
-                style="@style/ManageCard"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddStudents"
                 android:layout_width="match_parent"
-                android:layout_height="60dp">
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <ImageView
-                        android:layout_width="42dp"
-                        android:layout_height="42dp"
-                        android:src="@drawable/baseline_person_24"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginStart="10dp"
-                        app:tint="#6C8CFF"/>
-
-                    <LinearLayout
-                        android:layout_marginStart="12dp"
-                        android:orientation="vertical"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="10dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add Students"
-                            android:fontFamily="@font/lexend"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="16sp"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Enroll new students to your database"
-                            android:fontFamily="@font/lexend_medium"
-                            android:textColor="#9AA0A6"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Add Subjects -->
-            <com.google.android.material.card.MaterialCardView
-                style="@style/ManageCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp">
-
-                    <ImageView
-                        android:layout_width="42dp"
-                        android:layout_height="42dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="10dp"
-                        android:src="@drawable/outline_book_24"
-                        app:tint="#F4B400"/>
-
-                    <LinearLayout
-                        android:layout_marginStart="12dp"
-                        android:orientation="vertical"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add Subjects"
-                            android:fontFamily="@font/lexend"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="16sp"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Define curriculum and lesson types"
-                            android:fontFamily="@font/lexend_medium"
-                            android:textColor="#9AA0A6"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_height="85dp"
+                android:layout_marginBottom="18dp"
+                android:padding="20dp"
+                android:text="Add Students"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/lexend"
+                android:gravity="start|center_vertical"
+                android:backgroundTint="#1A2238"
+                app:cornerRadius="22dp"
+                app:strokeColor="#26304D"
+                app:strokeWidth="1dp"
+                app:elevation="8dp"
+                app:icon="@drawable/baseline_person_24"
+                app:iconTint="#6C8CFF"
+                app:iconPadding="16dp"
+                app:iconGravity="textStart" />
 
             <!-- Add Batches -->
-            <com.google.android.material.card.MaterialCardView
-                style="@style/ManageCard"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddBatches"
                 android:layout_width="match_parent"
-                android:layout_height="60dp">
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <ImageView
-                        android:layout_width="42dp"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginStart="10dp"
-                        android:src="@drawable/baseline_group_24"
-                        app:tint="#34A853"/>
-
-                    <LinearLayout
-                        android:layout_marginStart="12dp"
-                        android:orientation="vertical"
-                        android:layout_marginTop="10dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add Batches"
-                            android:fontFamily="@font/lexend"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="16sp"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Organize students into class groups"
-                            android:fontFamily="@font/lexend_medium"
-                            android:textColor="#9AA0A6"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_height="85dp"
+                android:padding="20dp"
+                android:text="Add Batches"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/lexend"
+                android:gravity="start|center_vertical"
+                android:backgroundTint="#1A2238"
+                app:cornerRadius="22dp"
+                app:strokeColor="#26304D"
+                app:strokeWidth="1dp"
+                app:elevation="8dp"
+                app:icon="@drawable/baseline_group_24"
+                app:iconTint="#34A853"
+                app:iconPadding="16dp"
+                app:iconGravity="textStart"
+                android:layout_marginBottom="18dp"/>
+            <!-- Add Subjects -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddSubjects"
+                android:layout_width="match_parent"
+                android:layout_height="85dp"
+                android:padding="20dp"
+                android:text="Add Subjects"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/lexend"
+                android:gravity="start|center_vertical"
+                android:backgroundTint="#1A2238"
+                app:cornerRadius="22dp"
+                app:strokeColor="#26304D"
+                app:strokeWidth="1dp"
+                app:elevation="8dp"
+                app:icon="@drawable/outline_book_24"
+                app:iconTint="#F4B400"
+                app:iconPadding="16dp"
+                app:iconGravity="textStart" />
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Version Text -->
+    <!-- Version -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="70dp"
         android:text="TEACHSYNC v1.0.0"
-        android:fontFamily="@font/lexend"
         android:textSize="11sp"
-        android:textColor="#5F6368"/>
-
+        android:textColor="#66709A"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="50dp"
+        android:fontFamily="@font/lexend"/>
 
 </FrameLayout>

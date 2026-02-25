@@ -29,7 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     CheckBox mRememberCheck;
     TextView mForgotPass;
     ProgressBar mProgressBar;
-    private FirebaseAuth mAuth;
+    FirebaseAuth mAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -9,11 +9,15 @@
     <TextView
         android:text="Mon"
         android:textColor="#8B90A0"
-        android:textSize="12sp"/>
+        android:textSize="12sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
     <TextView
         android:text="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </LinearLayout>

@@ -90,6 +90,7 @@
 
                     <TextView
                         android:text="12"
+                        android:id="@+id/tvTotalStudents"
                         android:textColor="#FFFFFF"
                         android:textSize="28sp"
                         android:textStyle="bold"
@@ -99,11 +100,13 @@
 
                     <TextView
                         android:text="+2 this month"
+                        android:id="@+id/tvTotalStudentsMonth"
                         android:textColor="#E0E6FF"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:visibility="visible"/>
                 </LinearLayout>
 
                 <!-- Today's Classes Card -->
@@ -189,31 +192,13 @@
                 android:layout_height="wrap_content"/>
 
             <!-- Activity Item -->
-            <LinearLayout
+            <!-- Recent Activity RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerRecentActivity"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:background="@drawable/card_dark"
-                android:padding="16dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="10dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Sarah J.\nPayment received for Calc II"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"/>
-
-                <TextView
-                    android:text="+$50.00"
-                    android:textColor="#00E676"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"/>
 
         </LinearLayout>
     </ScrollView>

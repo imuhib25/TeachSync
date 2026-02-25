@@ -5,6 +5,9 @@
     android:layout_marginTop="12dp"
     app:cardCornerRadius="14dp"
     app:cardBackgroundColor="#14192D"
+    android:background="@drawable/item_row_click"
+    android:clickable="true"
+    android:focusable="true"
     android:padding="14dp">
 
     <LinearLayout
