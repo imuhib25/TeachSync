@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,6 +49,10 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
         holder.name.setText(student.getName());
         holder.email.setText(student.getEmail());
+        holder.batch.setText(student.getBatch());
+        holder.phone.setText(student.getPhone());
+        holder.parent.setText(student.getParent());
+
         userID = DashboardFragment.userId;
 
         // Edit on click
@@ -61,12 +66,15 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView name, email;
+        TextView name, email, batch, phone, parent;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.txtName);
             email = itemView.findViewById(R.id.txtEmail);
+            batch = itemView.findViewById(R.id.txtBatch);
+            phone = itemView.findViewById(R.id.txtPhone);
+            parent = itemView.findViewById(R.id.txtParent);
         }
     }
 
@@ -102,16 +110,26 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
         TextInputEditText name = view.findViewById(R.id.edtName);
         TextInputEditText email = view.findViewById(R.id.edtEmail);
+        TextInputEditText phone = view.findViewById(R.id.edtPhone);
+        TextInputEditText parent = view.findViewById(R.id.edtParent);
+        AutoCompleteTextView batch = view.findViewById(R.id.etBatchName);
         MaterialButton btnSave = view.findViewById(R.id.btnSaveStudent);
 
         name.setText(student.getName());
         email.setText(student.getEmail());
+        phone.setText(student.getPhone());
+        parent.setText(student.getParent());
+        batch.setText(student.getBatch());
         btnSave.setText("Update Student");
 
         btnSave.setOnClickListener(v -> {
 
             String newName = name.getText().toString().trim();
             String newEmail = email.getText().toString().trim();
+            String newPhone = phone.getText().toString().trim();
+            String newBatch = batch.getText().toString().trim();
+            String newParent = parent.getText().toString().trim();
+
 
             if (newName.isEmpty() || newEmail.isEmpty()) {
                 Toast.makeText(activity, "Fill all fields", Toast.LENGTH_SHORT).show();
@@ -121,7 +139,10 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
             db.collection("users").document(userID).collection("students")
                     .document(student.getId())
                     .update("name", newName,
-                            "email", newEmail)
+                            "email", newEmail,
+                            "phone", newPhone,
+                            "batch", newBatch,
+                            "parent", newParent)
                     .addOnSuccessListener(unused -> {
                         Toast.makeText(activity, "Student Updated", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();

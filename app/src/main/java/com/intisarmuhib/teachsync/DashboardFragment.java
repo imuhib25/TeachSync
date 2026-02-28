@@ -126,8 +126,8 @@ public class DashboardFragment extends Fragment {
                                 StudentModel studentModel = dc.getDocument().toObject(StudentModel.class);
                                 ActivityModel activity = new ActivityModel(
                                         "New Student Added",
-                                        studentModel.getName() + " under " + "Batch Name",
-                                        ""
+                                        studentModel.getName(),
+                                        studentModel.getBatch()
                                 );
                                 activityAdapter.addActivity(activity);
                             }
@@ -142,8 +142,8 @@ public class DashboardFragment extends Fragment {
                                 SubjectModel subjectModel = dc.getDocument().toObject(SubjectModel.class);
                                 ActivityModel activity = new ActivityModel(
                                         "New Subject Added",
-                                        subjectModel.getName() + "Code: "+ subjectModel.getCode() + " under " + subjectModel.getTeacher(),
-                                        ""
+                                        subjectModel.getName(),
+                                        subjectModel.getCode()
                                 );
                                 activityAdapter.addActivity(activity);
                             }

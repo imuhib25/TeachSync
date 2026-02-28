@@ -25,6 +25,13 @@
             android:fontFamily="@font/lexend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/txtBatch"
+            android:textColor="#9AA0C3"
+            android:textSize="14sp"
+            android:fontFamily="@font/lexend_medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
 
         <TextView
             android:id="@+id/txtEmail"
@@ -41,12 +48,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <TextView
-            android:id="@+id/txtBatch"
+            android:id="@+id/txtParent"
             android:textColor="#9AA0C3"
             android:textSize="14sp"
             android:fontFamily="@font/lexend_medium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
 
     </LinearLayout>
 

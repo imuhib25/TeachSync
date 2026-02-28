@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="70dp"
+    android:layout_height="80dp"
+    android:layout_marginEnd="10dp"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@drawable/bg_date_chip"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/tvDay"
+        android:textColor="@android:color/white"
+        android:textSize="12sp" android:layout_height="wrap_content"
+        android:layout_width="wrap_content"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvDate"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+</LinearLayout>

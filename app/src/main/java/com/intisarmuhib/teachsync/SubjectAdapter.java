@@ -40,8 +40,8 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
         SubjectModel subject = displayList.get(position);
 
         holder.tvName.setText(subject.getName());
-        holder.tvDetails.setText("Code: " + subject.getCode() +
-                " | Teacher: " + subject.getTeacher());
+        holder.tvDetails.setText("Code: " + subject.getCode());
+              //  " | Teacher: " + subject.getTeacher());
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onSubjectClick(subject);

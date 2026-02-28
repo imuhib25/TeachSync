@@ -6,6 +6,7 @@ public class StudentModel {
     private String email;
     private String phone;
     private String batch;
+    private String parent;
     private String id;
 
     // Constructor
@@ -24,6 +25,8 @@ public class StudentModel {
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getBatch() { return batch; }
+    public String getParent() { return parent; }
+
 
     public String getId() {return id;}
 

@@ -11,6 +11,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -51,6 +53,8 @@ public class StudentsActivity extends AppCompatActivity {
     FirebaseFirestore db;
     private ImageButton backButton;
     String userID;
+
+    private List<String> batchList = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,6 +103,7 @@ public class StudentsActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         loadStudents();
+        loadBacthes();
         enableSwipeToDelete();
         setupSearch();
 
@@ -127,6 +132,19 @@ public class StudentsActivity extends AppCompatActivity {
                 });
     }
 
+    // Load Batches from Firestore
+    private void loadBacthes() {
+        db.collection("users").document(userID)
+                .collection("batches")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    batchList.clear();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        batchList.add(doc.getString("name"));
+                    }
+                });
+    }
+
     // 🔹 Add Student Bottom Sheet
     private void showAddStudentBottomSheet() {
 
@@ -138,14 +156,29 @@ public class StudentsActivity extends AppCompatActivity {
 
         TextInputEditText edtName = view.findViewById(R.id.edtName);
         TextInputEditText edtEmail = view.findViewById(R.id.edtEmail);
+        AutoCompleteTextView etBatch = view.findViewById(R.id.etBatchName);
+        TextInputEditText edtPhone = view.findViewById(R.id.edtPhone);
+        TextInputEditText edtParent = view.findViewById(R.id.edtParent);
         MaterialButton btnSave = view.findViewById(R.id.btnSaveStudent);
+
+        ArrayAdapter<String> bacthAdapter =
+                new ArrayAdapter<>(this,
+                        android.R.layout.simple_dropdown_item_1line,
+                        batchList);
+
+        etBatch.setAdapter(bacthAdapter);
+
 
         btnSave.setOnClickListener(v -> {
 
             String name = edtName.getText().toString().trim();
             String email = edtEmail.getText().toString().trim();
+            String batch = etBatch.getText().toString().trim();
+            String phone = edtPhone.getText().toString().trim();
+            String parent = edtParent.getText().toString().trim();
 
-            if (name.isEmpty() || email.isEmpty()) {
+
+            if (name.isEmpty() || email.isEmpty() || batch.isEmpty() || phone.isEmpty() || parent.isEmpty()) {
                 Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -154,7 +187,10 @@ public class StudentsActivity extends AppCompatActivity {
 
             Map<String, Object> studentMap = new HashMap<>();
             studentMap.put("name", name);
+            studentMap.put("batch", batch);
             studentMap.put("email", email);
+            studentMap.put("phone", phone);
+            studentMap.put("parent", parent);
             studentMap.put("createdAt", FieldValue.serverTimestamp());
             db.collection("users").document(userID)
                     .collection("students")
@@ -165,6 +201,10 @@ public class StudentsActivity extends AppCompatActivity {
 
                         edtName.setText("");
                         edtEmail.setText("");
+                        etBatch.setText("");
+                        edtPhone.setText("");
+                        edtParent.setText("");
+
 
                         btnSave.setEnabled(true);
                         dialog.dismiss();
