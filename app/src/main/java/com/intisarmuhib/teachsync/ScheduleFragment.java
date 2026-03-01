@@ -360,7 +360,7 @@ public class ScheduleFragment extends Fragment {
 
     private void deleteClass(ClassModel deleted) {
 
-        String monthKey = deleted.getMonthlyNumber();
+        String monthKey = deleted.getMonthKey();
 
         db.collection("users")
                 .document(DashboardFragment.userId)

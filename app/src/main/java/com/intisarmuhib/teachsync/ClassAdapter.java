@@ -53,7 +53,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
 
         holder.tvTopic.setText(model.getTopic());
         holder.tvBatch.setText("Batch: " + model.getBatch());
-        holder.tvMonthlyNumber.setText(model.getMonthlyNumber());
+        holder.tvMonthlyNumber.setText(String.valueOf(model.getMonthlyNumber()));
         holder.tvClassTime.setText("Time: " + model.getClassTime());
 
         holder.tvExtra.setVisibility(

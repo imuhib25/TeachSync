@@ -8,14 +8,14 @@ public class ClassModel {
     private String batchId;
     private String classTime;
     private String date;
-    private String monthlyNumber;
+    private int monthlyNumber;
     private boolean extra;
-
+    private String monthKey;
     public ClassModel() {}
 
     public ClassModel(String id, String topic, String batch, String batchId,
                       String classTime, String date,
-                      String monthlyNumber, boolean extra) {
+                      int monthlyNumber, String monthKey, boolean extra) {
         this.id = id;
         this.topic = topic;
         this.batch = batch;
@@ -23,6 +23,7 @@ public class ClassModel {
         this.classTime = classTime;
         this.date = date;
         this.monthlyNumber = monthlyNumber;
+        this.monthKey = monthKey;
         this.extra = extra;
     }
 
@@ -32,11 +33,12 @@ public class ClassModel {
     public String getBatchId() { return batchId; }
     public String getClassTime() { return classTime; }
     public String getDate() { return date; }
-    public String getMonthlyNumber() { return monthlyNumber; }
+    public int getMonthlyNumber() { return monthlyNumber; }
     public boolean isExtra() { return extra; }
 
     public void setId(String id) { this.id = id; }
-
+    public String getMonthKey() { return monthKey; }
+    public void setMonthlyNumber(int monthlyNumber) { this.monthlyNumber = monthlyNumber; }
     public void setDate(String date) {this.date = date;
     }
 }
