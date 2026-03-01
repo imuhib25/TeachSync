@@ -1,37 +1,26 @@
 package com.intisarmuhib.teachsync;
 
 import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import androidx.recyclerview.widget.*;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.*;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+
 public class ScheduleFragment extends Fragment {
 
     private LinearLayout dateContainer;
@@ -41,6 +30,7 @@ public class ScheduleFragment extends Fragment {
 
     private FirebaseFirestore db;
     private ClassAdapter adapter;
+    private ListenerRegistration classListener;
 
     private String selectedDate;
 
@@ -61,20 +51,253 @@ public class ScheduleFragment extends Fragment {
         adapter = new ClassAdapter();
         recyclerView.setAdapter(adapter);
 
+        enableSwipeDelete();
         generateDateChips();
 
-        fabAdd.setOnClickListener(v -> showAddClassBottomSheet());
+        adapter.setListener(this::showClassBottomSheet);
+        fabAdd.setOnClickListener(v -> showClassBottomSheet(null));
 
         return view;
     }
 
+    // ====================================================
+    // LOAD CLASSES LIVE
+    // ====================================================
+    private void loadClasses(String date) {
+
+        if (classListener != null)
+            classListener.remove();
+
+        classListener = db.collection("users")
+                .document(DashboardFragment.userId)
+                .collection("classes")
+                .whereEqualTo("date", date)
+                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .addSnapshotListener((value, error) -> {
+
+                    if (value == null || error != null) return;
+
+                    List<ClassModel> list = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : value.getDocuments()) {
+                        ClassModel model = doc.toObject(ClassModel.class);
+                        if (model != null) {
+                            model.setId(doc.getId());
+                            list.add(model);
+                        }
+                    }
+
+                    adapter.setData(list);
+                    tvSessionCount.setText(list.size() + " Sessions");
+                });
+    }
+
+    // ====================================================
+    // ADD / EDIT CLASS
+    // ====================================================
+    private void showClassBottomSheet(@Nullable ClassModel model) {
+
+        boolean isEdit = model != null;
+
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        View view = LayoutInflater.from(getContext())
+                .inflate(R.layout.bottomsheet_add_class, null);
+        dialog.setContentView(view);
+
+        TextInputEditText etTopic = view.findViewById(R.id.etTopic);
+        AutoCompleteTextView dropBatch = view.findViewById(R.id.dropBatch);
+        TextInputEditText etDate = view.findViewById(R.id.etDate);
+        CheckBox checkExtra = view.findViewById(R.id.checkExtra);
+        MaterialButton btnSave = view.findViewById(R.id.btnSave);
+
+        if (isEdit) {
+            etTopic.setText(model.getTopic());
+            dropBatch.setText(model.getBatch(), false);
+            etDate.setText(model.getDate());
+            checkExtra.setChecked(model.isExtra());
+        } else {
+            etDate.setText(selectedDate);
+        }
+
+        etDate.setFocusable(false);
+        etDate.setOnClickListener(v -> {
+            MaterialDatePicker<Long> picker =
+                    MaterialDatePicker.Builder.datePicker().build();
+
+            picker.show(getParentFragmentManager(), "DATE");
+
+            picker.addOnPositiveButtonClickListener(selection -> {
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(selection);
+                SimpleDateFormat format =
+                        new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+                etDate.setText(format.format(cal.getTime()));
+            });
+        });
+
+        Map<String,String> batchMap = new HashMap<>();
+        List<String> batchNames = new ArrayList<>();
+
+        db.collection("users")
+                .document(DashboardFragment.userId)
+                .collection("batches")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    for (DocumentSnapshot doc : snapshot) {
+                        String name = doc.getString("name");
+                        if (name != null) {
+                            batchNames.add(name);
+                            batchMap.put(name, doc.getId());
+                        }
+                    }
+
+                    ArrayAdapter<String> arrayAdapter =
+                            new ArrayAdapter<>(requireContext(),
+                                    android.R.layout.simple_dropdown_item_1line,
+                                    batchNames);
+
+                    dropBatch.setAdapter(arrayAdapter);
+                    dropBatch.setOnClickListener(v -> dropBatch.showDropDown());
+                });
+
+        btnSave.setOnClickListener(v -> {
+
+            String topic = etTopic.getText().toString().trim();
+            String batchName = dropBatch.getText().toString().trim();
+            String batchId = batchMap.get(batchName);
+            String date = etDate.getText().toString();
+
+            if (topic.isEmpty() || batchId == null || date.isEmpty()) {
+                Toast.makeText(getContext(),
+                        "Fill all fields",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            saveClass(isEdit, model, topic, batchName,
+                    batchId, date, checkExtra.isChecked(), dialog);
+        });
+
+        dialog.show();
+    }
+
+    // ====================================================
+    // SAVE CLASS WITH MONTHLY LIMIT PROTECTION
+    // ====================================================
+    private void saveClass(boolean isEdit,
+                           @Nullable ClassModel model,
+                           String topic,
+                           String batchName,
+                           String batchId,
+                           String date,
+                           boolean isExtra,
+                           BottomSheetDialog dialog) {
+
+        Calendar cal = Calendar.getInstance();
+        try {
+            Date parsed = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(date);
+            cal.setTime(parsed);
+        } catch (Exception ignored) {}
+
+        String monthKey = new SimpleDateFormat("MM-yyyy", Locale.getDefault())
+                .format(cal.getTime());
+
+        DocumentReference batchRef =
+                db.collection("users")
+                        .document(DashboardFragment.userId)
+                        .collection("batches")
+                        .document(batchId);
+
+        // 1️⃣ Get batch first
+        batchRef.get().addOnSuccessListener(batchSnap -> {
+
+            if (!batchSnap.exists()) return;
+
+            int totalAllowed = batchSnap.getLong("totalMonthlyClasses").intValue();
+
+            // 2️⃣ Count existing classes for this month
+            db.collection("users")
+                    .document(DashboardFragment.userId)
+                    .collection("classes")
+                    .whereEqualTo("batchId", batchId)
+                    .whereEqualTo("monthKey", monthKey)
+                    .get()
+                    .addOnSuccessListener(classSnap -> {
+
+                        int currentCount = classSnap.size();
+
+                        if (!isEdit && currentCount >= totalAllowed) {
+                            Snackbar.make(recyclerView,
+                                    "Monthly class limit reached!",
+                                    Snackbar.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        int nextNumber = currentCount + 1;
+
+                        Timestamp start = batchSnap.getTimestamp("startTime");
+                        Timestamp end = batchSnap.getTimestamp("endTime");
+
+                        String timeText = "";
+                        if (start != null && end != null) {
+                            SimpleDateFormat format =
+                                    new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                            timeText = format.format(start.toDate())
+                                    + " - "
+                                    + format.format(end.toDate());
+                        }
+
+                        Map<String,Object> data = new HashMap<>();
+                        data.put("topic", topic);
+                        data.put("batch", batchName);
+                        data.put("batchId", batchId);
+                        data.put("date", date);
+                        data.put("monthKey", monthKey);
+                        data.put("extra", isExtra);
+                        data.put("classTime", timeText);
+                        data.put("createdAt", Timestamp.now());
+
+                        if (!isEdit)
+                            data.put("monthlyNumber", nextNumber);
+                        else
+                            data.put("monthlyNumber", model.getMonthlyNumber());
+
+                        DocumentReference classRef;
+
+                        if (isEdit)
+                            classRef = db.collection("users")
+                                    .document(DashboardFragment.userId)
+                                    .collection("classes")
+                                    .document(model.getId());
+                        else
+                            classRef = db.collection("users")
+                                    .document(DashboardFragment.userId)
+                                    .collection("classes")
+                                    .document();
+
+                        classRef.set(data).addOnSuccessListener(aVoid -> {
+                            dialog.dismiss();
+                            Snackbar.make(recyclerView,
+                                    "Class Saved",
+                                    Snackbar.LENGTH_SHORT).show();
+                        });
+                    });
+        });
+    }
+
+    // ====================================================
+    // DATE CHIPS
+    // ====================================================
     private void generateDateChips() {
 
         dateContainer.removeAllViews();
 
         Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault());
-        SimpleDateFormat fullFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat dayFormat =
+                new SimpleDateFormat("EEE", Locale.getDefault());
+        SimpleDateFormat fullFormat =
+                new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
 
         for (int i = 0; i < 7; i++) {
 
@@ -85,23 +308,22 @@ public class ScheduleFragment extends Fragment {
             TextView tvDate = chip.findViewById(R.id.tvDate);
 
             Date date = calendar.getTime();
+            String formatted = fullFormat.format(date);
 
             tvDay.setText(dayFormat.format(date));
             tvDate.setText(new SimpleDateFormat("dd").format(date));
 
-            String formattedDate = fullFormat.format(date);
-
             if (i == 0) {
                 chip.setSelected(true);
-                selectedDate = formattedDate;
-                loadClassesForDate(selectedDate);
+                selectedDate = formatted;
+                loadClasses(selectedDate);
             }
 
             chip.setOnClickListener(v -> {
-                clearSelections();
+                clearSelection();
                 chip.setSelected(true);
-                selectedDate = formattedDate;
-                loadClassesForDate(selectedDate);
+                selectedDate = formatted;
+                loadClasses(selectedDate);
             });
 
             dateContainer.addView(chip);
@@ -109,108 +331,75 @@ public class ScheduleFragment extends Fragment {
         }
     }
 
-    private void clearSelections() {
-        for (int i = 0; i < dateContainer.getChildCount(); i++) {
-            dateContainer.getChildAt(i).setSelected(false);
-        }
-    }
+    private void enableSwipeDelete() {
 
-    private void loadClassesForDate(String date) {
+        ItemTouchHelper.SimpleCallback callback =
+                new ItemTouchHelper.SimpleCallback(0,
+                        ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
-        db.collection("classes")
-                .whereEqualTo("date", date)
-                .addSnapshotListener((value, error) -> {
-
-                    if (error != null || value == null) return;
-
-                    List<ClassModel> list = new ArrayList<>();
-
-                    for (DocumentSnapshot doc : value.getDocuments()) {
-                        list.add(doc.toObject(ClassModel.class));
+                    @Override
+                    public boolean onMove(@NonNull RecyclerView recyclerView,
+                                          @NonNull RecyclerView.ViewHolder viewHolder,
+                                          @NonNull RecyclerView.ViewHolder target) {
+                        return false;
                     }
 
-                    adapter.setData(list);
-                    tvSessionCount.setText(list.size() + " Sessions");
+                    @Override
+                    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder,
+                                         int direction) {
+
+                        int position = viewHolder.getAdapterPosition();
+                        ClassModel deleted = adapter.getItem(position);
+
+                        deleteClass(deleted);
+                    }
+                };
+
+        new ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
+    }
+
+    private void deleteClass(ClassModel deleted) {
+
+        String monthKey = deleted.getMonthlyNumber();
+
+        db.collection("users")
+                .document(DashboardFragment.userId)
+                .collection("classes")
+                .document(deleted.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+
+                    renumberMonthly(deleted.getBatchId(), monthKey);
+
+                    Snackbar.make(recyclerView,
+                                    "Class Deleted",
+                                    Snackbar.LENGTH_LONG)
+                            .show();
                 });
     }
 
-    private void showAddClassBottomSheet() {
+    private void renumberMonthly(String batchId, String monthKey) {
 
-        BottomSheetDialog sheetDialog = new BottomSheetDialog(requireContext());
+        db.collection("users")
+                .document(DashboardFragment.userId)
+                .collection("classes")
+                .whereEqualTo("batchId", batchId)
+                .whereEqualTo("monthKey", monthKey)
+                .orderBy("createdAt")
+                .get()
+                .addOnSuccessListener(snapshot -> {
 
-        View view = LayoutInflater.from(getContext())
-                .inflate(R.layout.bottomsheet_add_class, null);
+                    int count = 1;
 
-        sheetDialog.setContentView(view);
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        doc.getReference().update("monthlyNumber", count);
+                        count++;
+                    }
+                });
+    }
 
-        TextInputEditText etTopic = view.findViewById(R.id.etTopic);
-        AutoCompleteTextView dropBatch = view.findViewById(R.id.dropBatch);
-        AutoCompleteTextView dropMonthly =
-                view.findViewById(R.id.dropMonthlyClass);
-        TextInputEditText etDate = view.findViewById(R.id.etDate);
-        CheckBox checkExtra = view.findViewById(R.id.checkExtra);
-        MaterialButton btnSave = view.findViewById(R.id.btnSave);
-
-        // Monthly Number Dropdown (1–20)
-        List<String> numbers = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            numbers.add("Class " + i);
-        }
-
-        ArrayAdapter<String> monthlyAdapter =
-                new ArrayAdapter<>(requireContext(),
-                        android.R.layout.simple_dropdown_item_1line, numbers);
-
-        dropMonthly.setAdapter(monthlyAdapter);
-
-        etDate.setText(selectedDate);
-        final String[] sheetDate = {selectedDate};
-
-        etDate.setOnClickListener(v -> {
-
-            MaterialDatePicker<Long> picker =
-                    MaterialDatePicker.Builder.datePicker()
-                            .setTitleText("Select Date")
-                            .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
-                            .build();
-
-            picker.show(getParentFragmentManager(), "DATE_PICKER");
-
-            picker.addOnPositiveButtonClickListener(selection -> {
-
-                SimpleDateFormat sdf =
-                        new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-
-                sheetDate[0] = sdf.format(new Date(selection));
-                etDate.setText(sheetDate[0]);
-            });
-        });
-
-        btnSave.setOnClickListener(v -> {
-
-            String topic = etTopic.getText().toString().trim();
-            String batch = dropBatch.getText().toString().trim();
-            String monthlyNumber = dropMonthly.getText().toString().trim();
-            boolean isExtra = checkExtra.isChecked();
-
-            if (topic.isEmpty()) {
-                etTopic.setError("Required");
-                return;
-            }
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("topic", topic);
-            data.put("batch", batch);
-            data.put("date", sheetDate[0]);
-            data.put("monthlyNumber", monthlyNumber);
-            data.put("extra", isExtra);
-            data.put("createdAt", FieldValue.serverTimestamp());
-
-            db.collection("classes").add(data);
-
-            sheetDialog.dismiss();
-        });
-
-        sheetDialog.show();
+    private void clearSelection() {
+        for (int i = 0; i < dateContainer.getChildCount(); i++)
+            dateContainer.getChildAt(i).setSelected(false);
     }
 }

@@ -228,6 +228,7 @@ public class BatchesActivity extends AppCompatActivity {
                     new Timestamp(endCal.getTime()),
                     duration,
                     totalMonthlyClasses,
+                    0,
                     new Timestamp(Calendar.getInstance().getTime())
             );
 

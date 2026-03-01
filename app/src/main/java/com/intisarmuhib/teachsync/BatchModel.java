@@ -11,6 +11,7 @@ public class BatchModel {
     private Timestamp endTime;
     private long durationMinutes;
     private int totalMonthlyClasses;
+    private int currentMonthCount;
 
     private Timestamp createdAt;
 
@@ -18,7 +19,7 @@ public class BatchModel {
 
     public BatchModel(String id, String name, String subject,
                       Timestamp startTime, Timestamp endTime,
-                      long durationMinutes, int totalMonthlyClasses, Timestamp createdAt) {
+                      long durationMinutes, int totalMonthlyClasses,int currentMonthCount, Timestamp createdAt) {
         this.id = id;
         this.name = name;
         this.subject = subject;
@@ -26,6 +27,7 @@ public class BatchModel {
         this.endTime = endTime;
         this.durationMinutes = durationMinutes;
         this.totalMonthlyClasses = totalMonthlyClasses;
+        this.currentMonthCount = currentMonthCount;
         this.createdAt = createdAt;
     }
 
@@ -38,6 +40,9 @@ public class BatchModel {
     public Timestamp getCreatedAt() { return createdAt; }
     public int getTotalMonthlyClasses() {
         return totalMonthlyClasses;
+    }
+    public int getCurrentMonthCount(){
+        return currentMonthCount;
     }
 
     public void setTotalMonthlyClasses(int totalMonthlyClasses) {
