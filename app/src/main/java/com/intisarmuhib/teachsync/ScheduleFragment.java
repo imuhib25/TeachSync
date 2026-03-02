@@ -1,5 +1,13 @@
 package com.intisarmuhib.teachsync;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
@@ -194,55 +202,57 @@ public class ScheduleFragment extends Fragment {
                            boolean isExtra,
                            BottomSheetDialog dialog) {
 
-        Calendar cal = Calendar.getInstance();
-        try {
-            Date parsed = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(date);
-            cal.setTime(parsed);
-        } catch (Exception ignored) {}
-
-        String monthKey = new SimpleDateFormat("MM-yyyy", Locale.getDefault())
-                .format(cal.getTime());
-
         DocumentReference batchRef =
                 db.collection("users")
                         .document(DashboardFragment.userId)
                         .collection("batches")
                         .document(batchId);
 
-        // 1️⃣ Get batch first
         batchRef.get().addOnSuccessListener(batchSnap -> {
 
             if (!batchSnap.exists()) return;
 
-            int totalAllowed = batchSnap.getLong("totalMonthlyClasses").intValue();
+            Long totalLong = batchSnap.getLong("totalMonthlyClasses");
+            int totalAllowed = totalLong != null ? totalLong.intValue() : 0;
 
-            // 2️⃣ Count existing classes for this month
             db.collection("users")
                     .document(DashboardFragment.userId)
                     .collection("classes")
                     .whereEqualTo("batchId", batchId)
-                    .whereEqualTo("monthKey", monthKey)
                     .get()
                     .addOnSuccessListener(classSnap -> {
 
                         int currentCount = classSnap.size();
 
-                        if (!isEdit && currentCount >= totalAllowed) {
-                            Snackbar.make(recyclerView,
-                                    "Monthly class limit reached!",
-                                    Snackbar.LENGTH_LONG).show();
-                            return;
+                        // 🔥 RESET AFTER COMPLETION
+                        if (currentCount >= totalAllowed) {
+                            currentCount = 0;
+                        }
+                        int calculatedNumber;
+
+                        if (isExtra) {
+                            calculatedNumber = currentCount;   // do not increase
+                        } else {
+                            calculatedNumber = currentCount + 1;
                         }
 
-                        int nextNumber = currentCount + 1;
+                        final int nextNumber = calculatedNumber;
 
                         Timestamp start = batchSnap.getTimestamp("startTime");
                         Timestamp end = batchSnap.getTimestamp("endTime");
 
                         String timeText = "";
+                        long startMillis = 0;
+                        long endMillis = 0;
+
                         if (start != null && end != null) {
+
+                            startMillis = start.toDate().getTime();
+                            endMillis = end.toDate().getTime();
+
                             SimpleDateFormat format =
                                     new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
                             timeText = format.format(start.toDate())
                                     + " - "
                                     + format.format(end.toDate());
@@ -253,15 +263,12 @@ public class ScheduleFragment extends Fragment {
                         data.put("batch", batchName);
                         data.put("batchId", batchId);
                         data.put("date", date);
-                        data.put("monthKey", monthKey);
                         data.put("extra", isExtra);
                         data.put("classTime", timeText);
+                        data.put("startMillis", startMillis);
+                        data.put("endMillis", endMillis);
                         data.put("createdAt", Timestamp.now());
-
-                        if (!isEdit)
-                            data.put("monthlyNumber", nextNumber);
-                        else
-                            data.put("monthlyNumber", model.getMonthlyNumber());
+                        data.put("monthlyNumber", nextNumber);
 
                         DocumentReference classRef;
 
@@ -277,7 +284,16 @@ public class ScheduleFragment extends Fragment {
                                     .document();
 
                         classRef.set(data).addOnSuccessListener(aVoid -> {
+
+                            int remaining = totalAllowed - nextNumber;
+
+                            tvSessionCount.setText(
+                                    "Taken: " + nextNumber +
+                                            " | Remaining: " + remaining
+                            );
+
                             dialog.dismiss();
+
                             Snackbar.make(recyclerView,
                                     "Class Saved",
                                     Snackbar.LENGTH_SHORT).show();
@@ -335,7 +351,7 @@ public class ScheduleFragment extends Fragment {
 
         ItemTouchHelper.SimpleCallback callback =
                 new ItemTouchHelper.SimpleCallback(0,
-                        ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+                        ItemTouchHelper.LEFT) {
 
                     @Override
                     public boolean onMove(@NonNull RecyclerView recyclerView,
@@ -350,8 +366,33 @@ public class ScheduleFragment extends Fragment {
 
                         int position = viewHolder.getAdapterPosition();
                         ClassModel deleted = adapter.getItem(position);
-
                         deleteClass(deleted);
+                    }
+
+                    @Override
+                    public void onChildDraw(@NonNull Canvas c,
+                                            @NonNull RecyclerView recyclerView,
+                                            @NonNull RecyclerView.ViewHolder viewHolder,
+                                            float dX, float dY,
+                                            int actionState,
+                                            boolean isCurrentlyActive) {
+
+                        View itemView = viewHolder.itemView;
+                        Paint paint = new Paint();
+                        paint.setColor(Color.RED);
+
+                        RectF background = new RectF(
+                                itemView.getRight() + dX,
+                                itemView.getTop(),
+                                itemView.getRight(),
+                                itemView.getBottom()
+                        );
+
+                        c.drawRect(background, paint);
+
+                        super.onChildDraw(c, recyclerView,
+                                viewHolder, dX, dY,
+                                actionState, isCurrentlyActive);
                     }
                 };
 
@@ -401,5 +442,30 @@ public class ScheduleFragment extends Fragment {
     private void clearSelection() {
         for (int i = 0; i < dateContainer.getChildCount(); i++)
             dateContainer.getChildAt(i).setSelected(false);
+    }
+    private void scheduleReminder(long classStartTimeMillis) {
+
+        long reminderTime = classStartTimeMillis - (10 * 60 * 1000); // 10 min before
+
+        Intent intent = new Intent(requireContext(), ClassReminderReceiver.class);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                requireContext(),
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        AlarmManager alarmManager =
+                (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+
+        if (alarmManager != null) {
+
+            alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime,
+                    pendingIntent
+            );
+        }
     }
 }

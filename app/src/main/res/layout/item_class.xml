@@ -9,11 +9,22 @@
     android:clickable="true"
     android:focusable="true"
     android:padding="16dp">
-
+    <TextView
+        android:id="@+id/tvExtra"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="On Going"
+        android:textColor="@android:color/holo_green_dark"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_gravity="end"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="4dp"/>
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="85dp">
+
         <TextView
             android:text="English Literature"
             android:textColor="@android:color/white"

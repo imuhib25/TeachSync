@@ -53,12 +53,27 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
 
         holder.tvTopic.setText(model.getTopic());
         holder.tvBatch.setText("Batch: " + model.getBatch());
-        holder.tvMonthlyNumber.setText(String.valueOf(model.getMonthlyNumber()));
+
+        if (model.isExtra()) {
+            holder.tvMonthlyNumber.setText("Extra Class");
+            holder.tvExtra.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvMonthlyNumber.setText("Class: " + model.getMonthlyNumber());
+            holder.tvExtra.setVisibility(View.GONE);
+        }
+
         holder.tvClassTime.setText("Time: " + model.getClassTime());
 
-        holder.tvExtra.setVisibility(
-                model.isExtra() ? View.VISIBLE : View.GONE
-        );
+        // 🔥 ON GOING LOGIC
+        long now = System.currentTimeMillis();
+
+        if (model.getStartMillis() > 0 &&
+                now >= model.getStartMillis() &&
+                now <= model.getEndMillis()) {
+
+            holder.tvExtra.setVisibility(View.VISIBLE);
+            holder.tvExtra.setText("ON GOING");
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(model);
