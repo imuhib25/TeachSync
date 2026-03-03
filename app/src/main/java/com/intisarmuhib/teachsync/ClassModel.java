@@ -1,5 +1,7 @@
 package com.intisarmuhib.teachsync;
 
+import com.google.firebase.Timestamp;
+
 public class ClassModel {
 
     private String id;
@@ -10,6 +12,7 @@ public class ClassModel {
     private String date;        // "dd MMM yyyy"
     private String monthlyNumber; // Class number within cycle (stored as String)
     private boolean extra;
+    private Timestamp createdAt;
 
     // New: cycle tracking (replaces month-key grouping)
     private int cycleNumber;    // which cycle this class belongs to (1, 2, 3…)
@@ -20,7 +23,7 @@ public class ClassModel {
     public ClassModel(String id, String topic, String batch, String batchId,
                       String classTime, String date,
                       String monthlyNumber, boolean extra,
-                      int cycleNumber, int totalInCycle) {
+                      int cycleNumber, int totalInCycle, Timestamp createdAt) {
         this.id = id;
         this.topic = topic;
         this.batch = batch;
@@ -31,6 +34,7 @@ public class ClassModel {
         this.extra = extra;
         this.cycleNumber = cycleNumber;
         this.totalInCycle = totalInCycle;
+        this.createdAt = createdAt;
     }
 
     // Getters
@@ -44,6 +48,7 @@ public class ClassModel {
     public boolean isExtra() { return extra; }
     public int getCycleNumber() { return cycleNumber; }
     public int getTotalInCycle() { return totalInCycle; }
+    public Timestamp getCreatedAt() { return createdAt; }
 
     // Setters (all required for Firestore toObject() deserialization)
     public void setId(String id) { this.id = id; }
@@ -56,4 +61,5 @@ public class ClassModel {
     public void setExtra(boolean extra) { this.extra = extra; }
     public void setCycleNumber(int cycleNumber) { this.cycleNumber = cycleNumber; }
     public void setTotalInCycle(int totalInCycle) { this.totalInCycle = totalInCycle; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

@@ -81,6 +81,12 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         notifyItemRemoved(position);
     }
 
+    public void addItem(int position, ClassModel model) {
+        if (position < 0 || position > list.size()) return;
+        list.add(position, model);
+        notifyItemInserted(position);
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
