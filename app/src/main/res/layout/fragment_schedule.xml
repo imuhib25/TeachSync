@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#0E1220"
     tools:context=".ScheduleFragment">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -13,6 +14,19 @@
         android:background="#0B1023"
         android:padding="16dp">
 
+        <!-- Month name header e.g. "March 2025" -->
+        <TextView
+            android:id="@+id/tvCurrentMonth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#9FA8DA"
+            android:textSize="13sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="6dp"
+            android:text=""/>
+
+        <!-- Date chip strip -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,6 +47,7 @@
             android:layout_marginTop="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
         <TextView
             android:id="@+id/tvSessionCount"
             android:layout_width="wrap_content"
@@ -41,6 +56,7 @@
             android:textSize="14sp"
             android:text="Session Count: "
             android:layout_marginTop="10dp"/>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/classRecycler"
             android:layout_width="match_parent"
@@ -50,16 +66,15 @@
 
     </LinearLayout>
 
-    <!-- Floating Button -->
+    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
-        android:contentDescription="TODO"
+        android:contentDescription="Add Class"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="#5C6BC0"/>
-
 
 </FrameLayout>

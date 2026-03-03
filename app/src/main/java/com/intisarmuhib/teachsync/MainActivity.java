@@ -1,17 +1,19 @@
 package com.intisarmuhib.teachsync;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,79 +22,105 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.intisarmuhib.teachsync.databinding.ActivityMainBinding;
-import com.intisarmuhib.teachsync.R;
-
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
-    TextView mWelcomeText;
-    FirebaseAuth mAuth;
-    FirebaseFirestore firestore;
-    String userId;
 
+    // Launcher for POST_NOTIFICATIONS permission (Android 13+)
+    private final ActivityResultLauncher<String> notifPermLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.RequestPermission(),
+                    granted -> {
+                        // Nothing to do — AlarmManager handles graceful fallback
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        androidx.activity.EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNav);
-        bottomNavigationView.setSelectedItemId(R.id.dashboard);
-        bottomNavigationView.setOnItemSelectedListener(navListener);
-        Fragment selectedFragment = new DashboardFragment();
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, selectedFragment).commit();
+
+        // Guard: redirect to login if not authenticated
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.dashboard);
+        bottomNav.setOnItemSelectedListener(navListener);
+
+        // Only load initial fragment on fresh start (avoid re-loading on rotation)
+        if (savedInstanceState == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new DashboardFragment())
+                    .commit();
+        }
 
         createNotificationChannel();
+        requestNotificationPermissionIfNeeded();
     }
-    private NavigationBarView.OnItemSelectedListener navListener = item -> {
-        int itemId = item.getItemId();
-        Fragment selectedFragment = null;
 
-        if (itemId == R.id.dashboard) {
-            selectedFragment = new DashboardFragment();
-        } else if (itemId == R.id.nav_schedule) {
-            selectedFragment = new ScheduleFragment();
-        } else if (itemId == R.id.nav_manage) {
-            selectedFragment = new ManageFragment();
-        } else if (itemId == R.id.nav_finance) {
-            selectedFragment = new FinancesFragment();
-        } else if (itemId == R.id.nav_profile) {
-            selectedFragment = new ProfileFragment();
-        }
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, selectedFragment).commit();
+    // ── Bottom nav ────────────────────────────────────────────────────────
+    private final NavigationBarView.OnItemSelectedListener navListener = item -> {
+        int id = item.getItemId();
+        Fragment fragment = null;
+
+        if      (id == R.id.dashboard)    fragment = new DashboardFragment();
+        else if (id == R.id.nav_schedule) fragment = new ScheduleFragment();
+        else if (id == R.id.nav_manage)   fragment = new ManageFragment();
+        else if (id == R.id.nav_finance)  fragment = new FinancesFragment();
+        else if (id == R.id.nav_profile)  fragment = new ProfileFragment();
+
+        if (fragment == null) return false;
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
         return true;
     };
 
-
+    // ── Logout ────────────────────────────────────────────────────────────
     public void logout(View view) {
         FirebaseAuth.getInstance().signOut();
-        startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
+
+    // ── Notification channel (required for Android 8+) ───────────────────
     private void createNotificationChannel() {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "class_channel",
+                    "Class Reminders",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Alerts before a class starts");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) manager.createNotificationChannel(channel);
+        }
+    }
 
-            NotificationChannel channel =
-                    new NotificationChannel(
-                            "class_channel",
-                            "Class Reminder",
-                            NotificationManager.IMPORTANCE_HIGH
-                    );
-
-            NotificationManager manager =
-                    getSystemService(NotificationManager.class);
-
-            manager.createNotificationChannel(channel);
+    // ── Request POST_NOTIFICATIONS at runtime (Android 13+ / API 33+) ────
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
         }
     }
 }

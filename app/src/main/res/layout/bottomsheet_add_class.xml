@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="20dp"
@@ -6,15 +7,36 @@
     android:layout_height="wrap_content"
     android:background="#0B1020">
 
-    <TextView
-        android:text="Add New Class"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/white"
-        android:layout_marginBottom="16dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+    <!-- Title row: "Add New Class" + month name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
 
+        <TextView
+            android:id="@+id/tvSheetTitle"
+            android:text="Add New Class"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <!-- Month name label e.g. "March 2025" -->
+        <TextView
+            android:id="@+id/tvMonthLabel"
+            android:text=""
+            android:textSize="13sp"
+            android:textColor="#9FA8DA"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <!-- Topic -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -27,6 +49,7 @@
             android:textColor="@color/white" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Batch dropdown -->
     <AutoCompleteTextView
         android:id="@+id/dropBatch"
         android:layout_width="match_parent"
@@ -35,6 +58,8 @@
         android:hint="Select Batch"
         android:textColor="@color/white"
         android:textColorHint="#49454F" />
+
+    <!-- Date -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,31 +73,41 @@
             android:focusable="false"
             android:hint="Select Date"
             android:textColor="@color/white" />
-
     </com.google.android.material.textfield.TextInputLayout>
 
-    <AutoCompleteTextView
-        android:id="@+id/dropMonthlyClass"
+    <!-- Manual class number correction (visible only in edit mode) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutClassNumber"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Select Class Number"
-        android:textColor="@color/white"
-        android:textColorHint="#49454F"
-        android:visibility="gone" />
+        android:hint="Class Number (manual correction)"
+        android:visibility="gone"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etClassNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="@color/white" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Extra class checkbox -->
     <CheckBox
         android:id="@+id/checkExtra"
-        android:text="Extra Class"
+        android:text="Extra Class (won't count toward cycle)"
         android:layout_marginTop="12dp"
         android:layout_width="wrap_content"
         android:textColor="#49454F"
         android:layout_height="wrap_content"/>
 
+    <!-- Save button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
         android:text="Save"
         android:layout_marginTop="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
 </LinearLayout>
