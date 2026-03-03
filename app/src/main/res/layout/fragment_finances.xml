@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,233 +7,229 @@
     android:background="#0B1020"
     tools:context=".FinancesFragment">
 
-    <!-- Main Content -->
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:orientation="vertical">
 
-            <!-- Header -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:text="Finances"
-                    android:textColor="@android:color/white"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
-
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/baseline_search_24"
-                    app:tint="#8B90A0"/>
-
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="16dp"
-                    android:src="@drawable/outline_filter_list_24"
-                    app:tint="#8B90A0"/>
-            </LinearLayout>
-
-            <!-- Income Overview -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Income Overview"
-                android:textColor="#8B90A0"
-                android:layout_marginTop="20dp"
-                android:textSize="14sp"/>
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="$4,280.00"
-                    android:textColor="@android:color/white"
-                    android:textSize="28sp"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="  ↑12.5%"
-                    android:textColor="#2ECC71"
-                    android:textSize="14sp"
-                    android:layout_gravity="center_vertical"/>
-            </LinearLayout>
+            <!-- ================= HEADER ================= -->
 
             <TextView
+                android:id="@+id/tvFinanceTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Last 6 months activity"
-                android:textColor="#6F7486"
-                android:textSize="12sp"/>
+                android:text="Finance Dashboard"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"/>
 
-            <!-- Chart Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="18dp"
-                app:cardBackgroundColor="#151A2E">
+            <TextView
+                android:id="@+id/tvMonthLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="September 2026"
+                android:textColor="#94A3B8"
+                android:layout_marginBottom="16dp"/>
 
-                <!-- Placeholder for LineChart -->
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/mock_chart"/>
-            </com.google.android.material.card.MaterialCardView>
+            <!-- ================= SUMMARY CARDS ================= -->
 
-            <!-- Stats -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:orientation="horizontal"
-                android:weightSum="2">
+                android:weightSum="3">
 
+                <!-- Total Collected -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="100dp"
+                    android:layout_height="110dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     app:cardCornerRadius="16dp"
-                    app:cardBackgroundColor="#1A2340"
-                    android:padding="16dp">
+                    app:cardBackgroundColor="#3B82F6">
 
                     <LinearLayout
-                        android:layout_gravity="center"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:text="Collected"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="TOTAL REVENUE"
-                            android:textColor="#6C7CFF"
-                            android:textSize="12sp"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="$4,200"
-                            android:textColor="@android:color/white"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="+8% from last month"
-                            android:textColor="#8B90A0"
-                            android:textSize="12sp"/>
+                            android:id="@+id/tvCollected"
+                            android:text="৳ 12,500"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Total Due -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="100dp"
+                    android:layout_height="110dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
                     app:cardCornerRadius="16dp"
-                    app:cardBackgroundColor="#241E16"
-                    android:padding="16dp">
+                    app:cardBackgroundColor="#F59E0B">
 
                     <LinearLayout
-                        android:layout_gravity="center"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:padding="12dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="OUTSTANDING"
-                            android:textColor="#F5A623"
+                            android:text="Due"
+                            android:textColor="#94A3B8"
                             android:textSize="12sp"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="$350"
-                            android:textColor="@android:color/white"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="3 Pending invoices"
-                            android:textColor="#8B90A0"
-                            android:textSize="12sp"/>
+                            android:id="@+id/tvDue"
+                            android:text="৳ 5,500"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+
+                <!-- Overdue -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="110dp"
+                    android:layout_weight="1"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="#EF4444">
+
+                    <LinearLayout
+                        android:padding="12dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Overdue"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/tvOverdue"
+                            android:text="৳ 2,000"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
-            <!-- Transactions Header -->
-            <LinearLayout
+            <!-- ================= FORECAST PROGRESS ================= -->
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Monthly Target"
+                        android:textStyle="bold"
+                        android:textSize="14sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/tvForecast"
+                        android:text="Expected ৳18,000"
+                        android:textColor="#94A3B8"
+                        android:layout_marginBottom="8dp"/>
+
+                    <ProgressBar
+                        android:id="@+id/progressFinance"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:progress="65"
+                        android:progressTint="#3B82F6"/>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ================= BATCH BREAKDOWN ================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:orientation="horizontal">
+                android:text="Batch Breakdown"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
 
-                <TextView
-                    android:text="Recent Transactions"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvBatchFinance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="See All"
-                    android:textColor="#6C7CFF"
-                    android:textSize="14sp"/>
-            </LinearLayout>
+            <!-- ================= RECENT TRANSACTIONS ================= -->
 
-            <!-- Transaction Item (Reusable) -->
-            <include layout="@layout/item_transaction"/>
+            <TextView
+                android:layout_marginTop="24dp"
+                android:text="Recent Transactions"
+                android:textStyle="bold"
+                android:textSize="16sp" android:layout_height="wrap_content"
+                android:layout_width="wrap_content"/>
 
-            <include layout="@layout/item_transaction"/>
-
-            <include layout="@layout/item_transaction"/>
-            <include layout="@layout/item_transaction"/>
-           <include layout="@layout/item_transaction"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTransactions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <!-- Floating Action Button -->
+    <!-- Floating Add Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddFinance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
+        android:layout_margin="16dp"
         android:contentDescription="TODO"
-        app:tint="@color/white"
         android:src="@drawable/outline_add_24"
-        app:backgroundTint="#6C7CFF" />
+        android:layout_gravity="bottom|end"
+        android:foregroundTint="@color/white"
+        app:backgroundTint="#3B82F6"
+        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
 
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
