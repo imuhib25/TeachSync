@@ -1,9 +1,11 @@
 package com.intisarmuhib.teachsync;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.*;
@@ -11,6 +13,7 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
 
@@ -30,22 +33,24 @@ import java.util.*;
 
 public class ScheduleFragment extends Fragment {
 
+    // ── Views ─────────────────────────────────────────────────────────────
     private LinearLayout dateContainer;
     private TextView tvSessionCount;
-    private TextView tvCurrentMonth;
+    private TextView tvCurrentMonth;       // NEW: month name header
     private RecyclerView recyclerView;
     private FloatingActionButton fabAdd;
 
+    // ── Firebase ──────────────────────────────────────────────────────────
     private FirebaseFirestore db;
     private ListenerRegistration classListener;
+
+    // ── State ─────────────────────────────────────────────────────────────
     private ClassAdapter adapter;
     private String selectedDate;
 
-    private static final int NOTIFY_BEFORE_MINUTES = 10;
-
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
     // LIFECYCLE
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -60,11 +65,12 @@ public class ScheduleFragment extends Fragment {
         fabAdd         = view.findViewById(R.id.fabAdd);
 
         db = FirebaseFirestore.getInstance();
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ClassAdapter();
         recyclerView.setAdapter(adapter);
 
-        // Red swipe-to-delete with icon
+        // Red swipe-to-delete with delete icon (using shared helper in ClassAdapter)
         ClassAdapter.attachSwipeToDelete(recyclerView, position -> {
             ClassModel deleted = adapter.getItem(position);
             if (deleted == null) return;
@@ -75,32 +81,40 @@ public class ScheduleFragment extends Fragment {
         generateDateChips();
         adapter.setListener(this::showClassBottomSheet);
         fabAdd.setOnClickListener(v -> showClassBottomSheet(null));
+
         return view;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (classListener != null) { classListener.remove(); classListener = null; }
+        if (classListener != null) {
+            classListener.remove();
+            classListener = null;
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // DATE CHIPS
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // DATE CHIPS  — shows month name above strip
+    // ═════════════════════════════════════════════════════════════════════
 
     private void generateDateChips() {
         dateContainer.removeAllViews();
+
         Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dayFmt   = new SimpleDateFormat("EEE", Locale.getDefault());
-        SimpleDateFormat fullFmt  = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-        SimpleDateFormat ddFmt    = new SimpleDateFormat("dd", Locale.getDefault());
+        SimpleDateFormat dayFmt  = new SimpleDateFormat("EEE", Locale.getDefault());
+        SimpleDateFormat fullFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat ddFmt   = new SimpleDateFormat("dd", Locale.getDefault());
+        // FEATURE: month name header
         SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
 
         for (int i = 0; i < 7; i++) {
             View chip = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_date_chip, dateContainer, false);
+
             TextView tvDay  = chip.findViewById(R.id.tvDay);
             TextView tvDate = chip.findViewById(R.id.tvDate);
+
             Date date      = calendar.getTime();
             String fullStr = fullFmt.format(date);
 
@@ -110,6 +124,7 @@ public class ScheduleFragment extends Fragment {
             if (i == 0) {
                 chip.setSelected(true);
                 selectedDate = fullStr;
+                // Set month header for first chip
                 tvCurrentMonth.setText(monthFmt.format(date));
                 loadClasses(selectedDate);
             }
@@ -118,6 +133,7 @@ public class ScheduleFragment extends Fragment {
                 clearChipSelection();
                 chip.setSelected(true);
                 selectedDate = fullStr;
+                // Update month header on chip tap
                 tvCurrentMonth.setText(monthFmt.format(date));
                 loadClasses(selectedDate);
             });
@@ -132,12 +148,13 @@ public class ScheduleFragment extends Fragment {
             dateContainer.getChildAt(i).setSelected(false);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LOAD CLASSES
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // LOAD CLASSES  — live Firestore listener
+    // ═════════════════════════════════════════════════════════════════════
 
     private void loadClasses(String date) {
         if (classListener != null) classListener.remove();
+
         String userId = DashboardFragment.userId;
         if (userId == null || userId.isEmpty()) return;
 
@@ -148,22 +165,27 @@ public class ScheduleFragment extends Fragment {
                 .addSnapshotListener((value, error) -> {
                     if (!isAdded()) return;
                     if (error != null || value == null) return;
+
                     List<ClassModel> list = new ArrayList<>();
                     for (DocumentSnapshot doc : value.getDocuments()) {
                         ClassModel model = doc.toObject(ClassModel.class);
-                        if (model != null) { model.setId(doc.getId()); list.add(model); }
+                        if (model != null) {
+                            model.setId(doc.getId());
+                            list.add(model);
+                        }
                     }
                     adapter.setData(list);
                     tvSessionCount.setText(list.size() + " Sessions");
                 });
     }
 
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
     // ADD / EDIT BOTTOM SHEET
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
 
     private void showClassBottomSheet(@Nullable ClassModel model) {
         if (!isAdded() || getContext() == null) return;
+
         boolean isEdit = model != null;
 
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
@@ -171,63 +193,92 @@ public class ScheduleFragment extends Fragment {
                 .inflate(R.layout.bottomsheet_add_class, null);
         dialog.setContentView(view);
 
-        TextView tvSheetTitle          = view.findViewById(R.id.tvSheetTitle);
-        TextView tvMonthLabel          = view.findViewById(R.id.tvMonthLabel);
-        TextInputEditText etTopic      = view.findViewById(R.id.etTopic);
+        // ── Views ──────────────────────────────────────────────────────
+        TextView tvSheetTitle      = view.findViewById(R.id.tvSheetTitle);
+        TextView tvMonthLabel      = view.findViewById(R.id.tvMonthLabel);
+        TextInputEditText etTopic  = view.findViewById(R.id.etTopic);
         AutoCompleteTextView dropBatch = view.findViewById(R.id.dropBatch);
-        TextInputEditText etDate       = view.findViewById(R.id.etDate);
-        CheckBox checkExtra            = view.findViewById(R.id.checkExtra);
-        MaterialButton btnSave         = view.findViewById(R.id.btnSave);
-        TextInputLayout layoutClassNum = view.findViewById(R.id.layoutClassNumber);
-        TextInputEditText etClassNum   = view.findViewById(R.id.etClassNumber);
+        TextInputEditText etDate   = view.findViewById(R.id.etDate);
+        CheckBox checkExtra        = view.findViewById(R.id.checkExtra);
+        MaterialButton btnSave     = view.findViewById(R.id.btnSave);
+        TextInputLayout layoutClassNumber = view.findViewById(R.id.layoutClassNumber);
+        TextInputEditText etClassNumber   = view.findViewById(R.id.etClassNumber);
 
+        // ── Sheet title ────────────────────────────────────────────────
         tvSheetTitle.setText(isEdit ? "Edit Class" : "Add New Class");
-        setMonthLabel(tvMonthLabel, selectedDate);
 
+        // ── Month label from selected date ─────────────────────────────
+        // FEATURE: show "March 2025" in the sheet header
+        if (selectedDate != null && !selectedDate.isEmpty()) {
+            try {
+                Date d = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                        .parse(selectedDate);
+                if (d != null) {
+                    tvMonthLabel.setText(
+                            new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(d));
+                }
+            } catch (ParseException ignored) {}
+        }
+
+        // ── Pre-fill for edit ──────────────────────────────────────────
         if (isEdit) {
             etTopic.setText(model.getTopic());
             dropBatch.setText(model.getBatch(), false);
             etDate.setText(model.getDate());
             checkExtra.setChecked(model.isExtra());
-            layoutClassNum.setVisibility(View.VISIBLE);
-            etClassNum.setText(model.getMonthlyNumber());
+
+            // FEATURE: Manual class number correction — only visible in edit mode
+            layoutClassNumber.setVisibility(View.VISIBLE);
+            etClassNumber.setText(model.getMonthlyNumber() != null
+                    ? model.getMonthlyNumber() : "");
         } else {
-            layoutClassNum.setVisibility(View.GONE);
+            layoutClassNumber.setVisibility(View.GONE);
             etDate.setText(selectedDate);
         }
 
+        // ── Date picker ────────────────────────────────────────────────
         etDate.setFocusable(false);
         etDate.setOnClickListener(v -> {
             MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker().build();
             picker.show(getParentFragmentManager(), "DATE");
             picker.addOnPositiveButtonClickListener(selection -> {
-                // UTC calendar avoids timezone date-shift in negative UTC offsets
+                // Use UTC calendar to avoid timezone date-shift
                 Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
                 cal.setTimeInMillis(selection);
                 String formatted = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                         .format(cal.getTime());
                 etDate.setText(formatted);
-                setMonthLabel(tvMonthLabel, formatted);
+                // Update month label as user picks a different date
+                tvMonthLabel.setText(
+                        new SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                                .format(cal.getTime()));
             });
         });
 
+        // ── Batch dropdown ─────────────────────────────────────────────
         String userId = DashboardFragment.userId;
         if (userId == null) return;
+
         Map<String, String> batchMap = new HashMap<>();
         List<String> batchNames = new ArrayList<>();
 
-        db.collection("users").document(userId).collection("batches").get()
+        db.collection("users").document(userId).collection("batches")
+                .get()
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
                     for (DocumentSnapshot doc : snapshot) {
                         String name = doc.getString("name");
-                        if (name != null) { batchNames.add(name); batchMap.put(name, doc.getId()); }
+                        if (name != null) {
+                            batchNames.add(name);
+                            batchMap.put(name, doc.getId());
+                        }
                     }
                     dropBatch.setAdapter(new ArrayAdapter<>(requireContext(),
                             android.R.layout.simple_dropdown_item_1line, batchNames));
                     dropBatch.setOnClickListener(v -> dropBatch.showDropDown());
                 });
 
+        // ── Save ───────────────────────────────────────────────────────
         btnSave.setOnClickListener(v -> {
             String topic     = etTopic.getText() != null ? etTopic.getText().toString().trim() : "";
             String batchName = dropBatch.getText().toString().trim();
@@ -239,46 +290,32 @@ public class ScheduleFragment extends Fragment {
                 return;
             }
 
-            // Manual class number correction — edit mode only
-            String manualNum = null;
-            if (isEdit && layoutClassNum.getVisibility() == View.VISIBLE) {
-                String raw = etClassNum.getText() != null
-                        ? etClassNum.getText().toString().trim() : "";
-                if (!raw.isEmpty()) manualNum = raw;
+            // Manual class number override (edit mode only)
+            String manualClassNumber = null;
+            if (isEdit && layoutClassNumber.getVisibility() == View.VISIBLE) {
+                String raw = etClassNumber.getText() != null
+                        ? etClassNumber.getText().toString().trim() : "";
+                if (!raw.isEmpty()) manualClassNumber = raw;
             }
 
             saveClass(isEdit, model, topic, batchName, batchId, date,
-                    checkExtra.isChecked(), manualNum, dialog);
+                    checkExtra.isChecked(), manualClassNumber, dialog);
         });
 
         dialog.show();
     }
 
-    private void setMonthLabel(TextView tv, String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) return;
-        try {
-            Date d = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(dateStr);
-            if (d != null)
-                tv.setText(new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(d));
-        } catch (ParseException ignored) {}
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // SAVE CLASS
-    //
-    // KEY FIX for "Class 0" bug:
-    // We count actual non-extra documents already saved for this batch+cycle
-    // instead of reading currentMonthCount from the batch doc. The batch doc
-    // counter may be stale (0) if the batch was created before this field
-    // existed, or if classes were added by the old code that never incremented
-    // it. Counting real documents is always accurate.
-    // currentMonthCount on the batch is then synced to match and kept updated.
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // SAVE CLASS  — cycle-based counter, extra class handling
+    // ═════════════════════════════════════════════════════════════════════
 
     private void saveClass(boolean isEdit,
                            @Nullable ClassModel existingModel,
-                           String topic, String batchName, String batchId,
-                           String date, boolean isExtra,
+                           String topic,
+                           String batchName,
+                           String batchId,
+                           String date,
+                           boolean isExtra,
                            @Nullable String manualClassNumber,
                            BottomSheetDialog dialog) {
 
@@ -288,198 +325,215 @@ public class ScheduleFragment extends Fragment {
         DocumentReference batchRef = db.collection("users").document(userId)
                 .collection("batches").document(batchId);
 
-        // Step 1: get batch metadata
         batchRef.get().addOnSuccessListener(batchSnap -> {
             if (!isAdded() || !batchSnap.exists()) return;
 
             Long totalLong = batchSnap.getLong("totalMonthlyClasses");
             int total      = totalLong != null ? totalLong.intValue() : 0;
 
+            Long takenLong = batchSnap.getLong("currentMonthCount");
+            int taken      = takenLong != null ? takenLong.intValue() : 0;
+
             Long cycleLong = batchSnap.getLong("cycleCount");
             int cycleCount = cycleLong != null ? cycleLong.intValue() : 1;
 
-            // Step 2: count actual saved non-extra docs for this batch+cycle
-            // This is the source of truth — immune to stale counters
-            db.collection("users").document(userId)
-                    .collection("classes")
-                    .whereEqualTo("batchId",     batchId)
-                    .whereEqualTo("cycleNumber", cycleCount)
-                    .whereEqualTo("extra",       false)
-                    .get()
-                    .addOnSuccessListener(existingSnap -> {
-                        if (!isAdded()) return;
+            // ── Block if cycle full (non-extra, new class only) ────────
+            // FEATURE: reset after completing total (not monthly reset)
+            if (!isEdit && !isExtra && taken >= total) {
+                Snackbar.make(recyclerView,
+                        "Cycle complete! Reset or start new cycle.",
+                        Snackbar.LENGTH_LONG)
+                        .setAction("RESET", v -> resetCycle(batchId, batchRef, total))
+                        .show();
+                return;
+            }
 
-                        int taken = existingSnap.size();
+            // ── Determine class number ─────────────────────────────────
+            // FEATURE: extra class doesn't increment number
+            String classNumber;
+            if (isExtra) {
+                classNumber = "Extra";
+            } else if (manualClassNumber != null) {
+                // FEATURE: manual correction overrides
+                classNumber = manualClassNumber;
+            } else if (isEdit && existingModel != null) {
+                classNumber = existingModel.getMonthlyNumber();
+            } else {
+                classNumber = String.valueOf(taken + 1);
+            }
 
-                        // Heal stale counter on batch doc if needed
-                        Long storedTaken = batchSnap.getLong("currentMonthCount");
-                        if (storedTaken == null || storedTaken.intValue() != taken) {
-                            batchRef.update("currentMonthCount", taken);
-                        }
+            // ── Build time text from batch ─────────────────────────────
+            Timestamp startTs = batchSnap.getTimestamp("startTime");
+            Timestamp endTs   = batchSnap.getTimestamp("endTime");
+            String timeText;
 
-                        // Block full cycle (non-extra new class only)
-                        if (!isEdit && !isExtra && total > 0 && taken >= total) {
-                            Snackbar.make(recyclerView,
-                                            "Cycle complete! Reset to add more classes.",
-                                            Snackbar.LENGTH_LONG)
-                                    .setAction("RESET", v -> resetCycle(batchRef))
-                                    .show();
-                            return;
-                        }
+            if (startTs != null && endTs != null) {
+                SimpleDateFormat fmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                timeText = fmt.format(startTs.toDate()) + " - " + fmt.format(endTs.toDate());
+            } else {
+                timeText = "";
+            }
 
-                        // Determine class number
-                        // taken = actual docs already on disk for this cycle
-                        // First class: taken=0 → "1". Second: taken=1 → "2". Etc.
-                        final String classNumber;
-                        if (isExtra) {
-                            classNumber = "Extra";
-                        } else if (manualClassNumber != null) {
-                            classNumber = manualClassNumber;
-                        } else if (isEdit && existingModel != null) {
-                            classNumber = existingModel.getMonthlyNumber();
-                        } else {
-                            classNumber = String.valueOf(taken + 1);
-                        }
+            // ── Build Firestore data map ───────────────────────────────
+            Map<String, Object> data = new HashMap<>();
+            data.put("topic",         topic);
+            data.put("batch",         batchName);
+            data.put("batchId",       batchId);
+            data.put("date",          date);
+            data.put("extra",         isExtra);
+            data.put("classTime",     timeText);
+            data.put("createdAt",     Timestamp.now());
+            data.put("monthlyNumber", classNumber);
+            data.put("cycleNumber",   cycleCount);
+            data.put("totalInCycle",  total);
 
-                        // Build time string from batch timestamps
-                        Timestamp startTs = batchSnap.getTimestamp("startTime");
-                        Timestamp endTs   = batchSnap.getTimestamp("endTime");
-                        final String timeText = (startTs != null && endTs != null)
-                                ? new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                                .format(startTs.toDate())
-                                + " - "
-                                + new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                                .format(endTs.toDate())
-                                : "";
+            DocumentReference classRef = isEdit && existingModel != null
+                    ? db.collection("users").document(userId)
+                            .collection("classes").document(existingModel.getId())
+                    : db.collection("users").document(userId)
+                            .collection("classes").document();
 
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("topic",         topic);
-                        data.put("batch",         batchName);
-                        data.put("batchId",       batchId);
-                        data.put("date",          date);
-                        data.put("extra",         isExtra);
-                        data.put("classTime",     timeText);
-                        data.put("createdAt",     Timestamp.now());
-                        data.put("monthlyNumber", classNumber);  // always String now
-                        data.put("cycleNumber",   cycleCount);
-                        data.put("totalInCycle",  total);
+            classRef.set(data).addOnSuccessListener(aVoid -> {
+                if (!isAdded()) return;
 
-                        DocumentReference classRef = isEdit && existingModel != null
-                                ? db.collection("users").document(userId)
-                                .collection("classes").document(existingModel.getId())
-                                : db.collection("users").document(userId)
-                                .collection("classes").document();
+                // ── Update batch counter (only for non-extra, new class) ─
+                if (!isEdit && !isExtra) {
+                    int newTaken = taken + 1;
+                    Map<String, Object> batchUpdate = new HashMap<>();
+                    batchUpdate.put("currentMonthCount", newTaken);
 
-                        classRef.set(data)
-                                .addOnSuccessListener(aVoid -> {
-                                    if (!isAdded()) return;
+                    // FEATURE: auto-reset if just completed the cycle
+                    if (newTaken >= total) {
+                        Snackbar.make(recyclerView,
+                                "🎉 Cycle complete! " + total + "/" + total + " classes done.",
+                                Snackbar.LENGTH_LONG)
+                                .setAction("RESET NOW", v ->
+                                        resetCycle(batchId, batchRef, total))
+                                .show();
+                    }
+                    batchRef.update(batchUpdate);
+                }
 
-                                    // Increment batch counter for new non-extra class
-                                    if (!isEdit && !isExtra) {
-                                        int newTaken = taken + 1;
-                                        batchRef.update("currentMonthCount", newTaken);
+                dialog.dismiss();
+                Snackbar.make(recyclerView, "Class saved", Snackbar.LENGTH_SHORT).show();
 
-                                        if (total > 0 && newTaken >= total) {
-                                            Snackbar.make(recyclerView,
-                                                            "Cycle complete! "
-                                                                    + newTaken + "/" + total + " classes done.",
-                                                            Snackbar.LENGTH_LONG)
-                                                    .setAction("RESET", v -> resetCycle(batchRef))
-                                                    .show();
-                                        }
-                                    }
+                // ── Schedule pre-class push notification ─────────────────
+                scheduleNotification(classRef.getId(), topic, batchName, timeText, date);
 
-                                    dialog.dismiss();
-                                    Snackbar.make(recyclerView, "Class saved",
-                                            Snackbar.LENGTH_SHORT).show();
-                                    scheduleNotification(classRef.getId(), topic,
-                                            batchName, timeText, date);
-                                })
-                                .addOnFailureListener(e -> {
-                                    if (!isAdded()) return;
-                                    Snackbar.make(recyclerView, "Failed to save class",
-                                            Snackbar.LENGTH_SHORT).show();
-                                });
-                    });
+            }).addOnFailureListener(e -> {
+                if (!isAdded()) return;
+                Snackbar.make(recyclerView, "Failed to save class", Snackbar.LENGTH_SHORT).show();
+            });
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // CYCLE RESET
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // CYCLE RESET  — resets currentMonthCount, increments cycleCount
+    // ═════════════════════════════════════════════════════════════════════
 
-    private void resetCycle(DocumentReference batchRef) {
+    private void resetCycle(String batchId, DocumentReference batchRef, int total) {
+        String userId = DashboardFragment.userId;
+        if (userId == null) return;
+
         batchRef.get().addOnSuccessListener(snap -> {
             Long cycleLong = snap.getLong("cycleCount");
             int newCycle   = (cycleLong != null ? cycleLong.intValue() : 1) + 1;
+
             Map<String, Object> update = new HashMap<>();
             update.put("currentMonthCount", 0);
             update.put("cycleCount", newCycle);
+
             batchRef.update(update).addOnSuccessListener(v -> {
                 if (!isAdded()) return;
-                Snackbar.make(recyclerView, "Cycle reset! Starting cycle " + newCycle,
+                Snackbar.make(recyclerView,
+                        "Cycle reset! Starting cycle " + newCycle,
                         Snackbar.LENGTH_SHORT).show();
             });
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // DELETE CLASS
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // DELETE CLASS  — removes from Firestore, renumbers, decrements batch
+    // ═════════════════════════════════════════════════════════════════════
 
     private void deleteClass(ClassModel deleted) {
         String userId = DashboardFragment.userId;
         if (userId == null) return;
+
+        // Derive cycleNumber to renumber correctly
+        int cycleNumber = deleted.getCycleNumber();
 
         db.collection("users").document(userId)
                 .collection("classes").document(deleted.getId())
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     if (!isAdded()) return;
+
+                    // Renumber remaining classes in same cycle
                     if (!deleted.isExtra()) {
-                        renumberCycle(userId, deleted.getBatchId(), deleted.getCycleNumber());
-                        decrementBatchCount(userId, deleted.getBatchId());
+                        renumberCycle(deleted.getBatchId(), cycleNumber);
+                        decrementBatchCount(deleted.getBatchId());
                     }
+
+                    // Cancel scheduled notification
                     cancelNotification(deleted.getId());
+
                     Snackbar.make(recyclerView, "Class deleted", Snackbar.LENGTH_LONG).show();
                 });
     }
 
-    private void renumberCycle(String userId, String batchId, int cycleNumber) {
-        db.collection("users").document(userId).collection("classes")
-                .whereEqualTo("batchId",     batchId)
+    private void renumberCycle(String batchId, int cycleNumber) {
+        String userId = DashboardFragment.userId;
+        if (userId == null) return;
+
+        db.collection("users").document(userId)
+                .collection("classes")
+                .whereEqualTo("batchId", batchId)
                 .whereEqualTo("cycleNumber", cycleNumber)
-                .whereEqualTo("extra",       false)
+                .whereEqualTo("extra", false)
                 .orderBy("createdAt")
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     int count = 1;
-                    for (DocumentSnapshot doc : snapshot.getDocuments())
-                        doc.getReference().update("monthlyNumber", String.valueOf(count++));
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        doc.getReference().update("monthlyNumber", String.valueOf(count));
+                        count++;
+                    }
                 });
     }
 
-    private void decrementBatchCount(String userId, String batchId) {
+    private void decrementBatchCount(String batchId) {
+        String userId = DashboardFragment.userId;
+        if (userId == null) return;
+
         DocumentReference batchRef = db.collection("users").document(userId)
                 .collection("batches").document(batchId);
+
         batchRef.get().addOnSuccessListener(snap -> {
             Long taken = snap.getLong("currentMonthCount");
-            batchRef.update("currentMonthCount",
-                    taken != null ? Math.max(0, taken.intValue() - 1) : 0);
+            int newVal = taken != null ? Math.max(0, taken.intValue() - 1) : 0;
+            batchRef.update("currentMonthCount", newVal);
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // PUSH NOTIFICATIONS
-    // ─────────────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // PUSH NOTIFICATION SCHEDULING
+    // FEATURE: schedule alarm X minutes before classTime on classDate
+    // ═════════════════════════════════════════════════════════════════════
+
+    private static final int NOTIFY_BEFORE_MINUTES = 10;
 
     private void scheduleNotification(String classId, String topic,
                                       String batchName, String timeText, String date) {
         if (getContext() == null) return;
-        long triggerAt = parseClassStartMillis(date, timeText);
-        if (triggerAt <= 0) return;
-        long alarmAt = triggerAt - (NOTIFY_BEFORE_MINUTES * 60 * 1000L);
-        if (alarmAt <= System.currentTimeMillis()) return;
+
+        // Parse the class start time and date into an exact millisecond timestamp
+        long triggerAtMillis = parseClassStartMillis(date, timeText);
+        if (triggerAtMillis <= 0) return;
+
+        // Subtract notify window
+        long alarmMillis = triggerAtMillis - (NOTIFY_BEFORE_MINUTES * 60 * 1000L);
+        if (alarmMillis <= System.currentTimeMillis()) return; // already past
 
         Intent intent = new Intent(getContext(), ClassReminderReceiver.class);
         intent.putExtra("title",          batchName + " class starting soon");
@@ -490,46 +544,71 @@ public class ScheduleFragment extends Fragment {
                 ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 : PendingIntent.FLAG_UPDATE_CURRENT;
 
-        PendingIntent pi = PendingIntent.getBroadcast(
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 getContext(), classId.hashCode(), intent, flags);
-        AlarmManager am = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        if (am == null) return;
+
+        AlarmManager alarmManager =
+                (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (am.canScheduleExactAlarms())
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmAt, pi);
-                else
-                    am.set(AlarmManager.RTC_WAKEUP, alarmAt, pi);
+                // Android 12+ requires SCHEDULE_EXACT_ALARM permission
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP, alarmMillis, pendingIntent);
+                } else {
+                    // Fallback to inexact alarm if exact not permitted
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, alarmMillis, pendingIntent);
+                }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmAt, pi);
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP, alarmMillis, pendingIntent);
             } else {
-                am.setExact(AlarmManager.RTC_WAKEUP, alarmAt, pi);
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmMillis, pendingIntent);
             }
         } catch (SecurityException e) {
-            android.util.Log.w("ScheduleFragment", "Alarm denied: " + e.getMessage());
+            android.util.Log.w("ScheduleFragment", "Cannot schedule exact alarm: " + e.getMessage());
         }
     }
 
     private void cancelNotification(String classId) {
         if (getContext() == null) return;
+
+        Intent intent = new Intent(getContext(), ClassReminderReceiver.class);
         int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 : PendingIntent.FLAG_UPDATE_CURRENT;
-        PendingIntent pi = PendingIntent.getBroadcast(getContext(), classId.hashCode(),
-                new Intent(getContext(), ClassReminderReceiver.class), flags);
-        AlarmManager am = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        if (am != null) am.cancel(pi);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                getContext(), classId.hashCode(), intent, flags);
+
+        AlarmManager alarmManager =
+                (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }
     }
 
+    /**
+     * Parses "dd MMM yyyy" + "hh:mm a - hh:mm a" into epoch millis for class start.
+     * Returns -1 if parsing fails.
+     */
     private long parseClassStartMillis(String date, String timeText) {
         try {
             if (date == null || timeText == null) return -1;
             String[] parts = timeText.split(" - ");
             if (parts.length < 1) return -1;
-            Date parsed = new SimpleDateFormat("dd MMM yyyy hh:mm a", Locale.getDefault())
-                    .parse(date + " " + parts[0].trim());
+
+            String startTimeStr = parts[0].trim();
+            String dateTimeStr  = date + " " + startTimeStr;
+
+            SimpleDateFormat fmt = new SimpleDateFormat(
+                    "dd MMM yyyy hh:mm a", Locale.getDefault());
+            Date parsed = fmt.parse(dateTimeStr);
             return parsed != null ? parsed.getTime() : -1;
-        } catch (Exception e) { return -1; }
+        } catch (Exception e) {
+            return -1;
+        }
     }
 }

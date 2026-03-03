@@ -2,6 +2,7 @@ package com.intisarmuhib.teachsync;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -9,6 +10,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -28,10 +30,13 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     private List<ClassModel> list = new ArrayList<>();
     private OnItemClickListener listener;
 
-    // Refreshes "On Going" badge every minute
+    // Handler for periodic "On Going" refresh every 60 seconds
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private RecyclerView attachedRecyclerView;
+
     private final Runnable refreshRunnable = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
             notifyDataSetChanged();
             handler.postDelayed(this, 60_000);
         }
@@ -48,6 +53,8 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
+        attachedRecyclerView = recyclerView;
+        // Start periodic refresh so "On Going" badge updates in real time
         handler.postDelayed(refreshRunnable, 60_000);
     }
 
@@ -55,6 +62,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onDetachedFromRecyclerView(recyclerView);
         handler.removeCallbacks(refreshRunnable);
+        attachedRecyclerView = null;
     }
 
     public void setData(List<ClassModel> newList) {
@@ -86,34 +94,38 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         ClassModel model = list.get(position);
 
         holder.tvTopic.setText(model.getTopic() != null ? model.getTopic() : "");
-        holder.tvBatch.setText("Batch: " + (model.getBatch() != null ? model.getBatch() : ""));
-        holder.tvClassTime.setText(model.getClassTime() != null ? model.getClassTime() : "");
 
+        String batch = model.getBatch() != null ? model.getBatch() : "";
+        holder.tvBatch.setText("Batch: " + batch);
+
+        String classTime = model.getClassTime() != null ? model.getClassTime() : "";
+        holder.tvClassTime.setText(classTime);
+
+        // ── Extra class: show "Extra" label, hide number ──────────────────
         if (model.isExtra()) {
-            // Extra class: show tag, hide number and remaining chip
-            holder.tvExtra.setVisibility(View.VISIBLE);
             holder.tvMonthlyNumber.setVisibility(View.GONE);
+            holder.tvExtra.setVisibility(View.VISIBLE);
             holder.tvRemaining.setVisibility(View.GONE);
         } else {
             holder.tvExtra.setVisibility(View.GONE);
             holder.tvMonthlyNumber.setVisibility(View.VISIBLE);
 
-            String num   = model.getMonthlyNumber();
-            int total    = model.getTotalInCycle();
+            String num = model.getMonthlyNumber() != null ? model.getMonthlyNumber() : "";
+            int total = model.getTotalInCycle();
             holder.tvMonthlyNumber.setText("Class " + num + " of " + total);
 
-            // Remaining classes chip
+            // ── Remaining classes chip ──────────────────────────────────────
             try {
-                int taken     = Integer.parseInt(num);
+                int taken = Integer.parseInt(num);
                 int remaining = total - taken;
                 if (remaining > 0) {
                     holder.tvRemaining.setText(remaining + " remaining");
-                    holder.tvRemaining.setBackgroundColor(0x993949AB);
                     holder.tvRemaining.setVisibility(View.VISIBLE);
+                    holder.tvRemaining.setBackgroundColor(0x993949AB);
                 } else if (remaining == 0) {
                     holder.tvRemaining.setText("Cycle complete!");
-                    holder.tvRemaining.setBackgroundColor(0x99388E3C);
                     holder.tvRemaining.setVisibility(View.VISIBLE);
+                    holder.tvRemaining.setBackgroundColor(0x99388E3C);
                 } else {
                     holder.tvRemaining.setVisibility(View.GONE);
                 }
@@ -122,8 +134,12 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
             }
         }
 
-        // On Going badge
-        holder.tvOnGoing.setVisibility(isOnGoing(model) ? View.VISIBLE : View.GONE);
+        // ── On Going badge ────────────────────────────────────────────────
+        if (isOnGoing(model)) {
+            holder.tvOnGoing.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvOnGoing.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(model);
@@ -131,115 +147,139 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     }
 
     @Override
-    public int getItemCount() { return list.size(); }
+    public int getItemCount() {
+        return list.size();
+    }
 
-    // Returns true if current time is within this class's time window today
+    // ── Determine if a class is currently on-going ────────────────────────
+    // classTime format: "10:00 AM - 11:30 AM"
     private boolean isOnGoing(ClassModel model) {
         if (model.getClassTime() == null || model.getClassTime().isEmpty()) return false;
         if (model.getDate() == null || model.getDate().isEmpty()) return false;
+
         try {
             String[] parts = model.getClassTime().split(" - ");
             if (parts.length != 2) return false;
 
-            SimpleDateFormat dateFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
             SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+            SimpleDateFormat dateFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
 
             Date classDate = dateFmt.parse(model.getDate());
             if (classDate == null) return false;
 
-            Calendar today    = Calendar.getInstance();
+            // Check today matches class date
+            Calendar today = Calendar.getInstance();
             Calendar classDay = Calendar.getInstance();
             classDay.setTime(classDate);
 
             if (today.get(Calendar.YEAR) != classDay.get(Calendar.YEAR) ||
-                    today.get(Calendar.DAY_OF_YEAR) != classDay.get(Calendar.DAY_OF_YEAR))
+                today.get(Calendar.DAY_OF_YEAR) != classDay.get(Calendar.DAY_OF_YEAR)) {
                 return false;
+            }
 
             Date startTime = timeFmt.parse(parts[0].trim());
-            Date endTime   = timeFmt.parse(parts[1].trim());
+            Date endTime = timeFmt.parse(parts[1].trim());
             if (startTime == null || endTime == null) return false;
 
+            // Apply today's date to parsed times
             Calendar startCal = Calendar.getInstance();
             startCal.setTime(startTime);
-            startCal.set(Calendar.YEAR,         today.get(Calendar.YEAR));
-            startCal.set(Calendar.MONTH,        today.get(Calendar.MONTH));
+            startCal.set(Calendar.YEAR, today.get(Calendar.YEAR));
+            startCal.set(Calendar.MONTH, today.get(Calendar.MONTH));
             startCal.set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH));
 
             Calendar endCal = Calendar.getInstance();
             endCal.setTime(endTime);
-            endCal.set(Calendar.YEAR,         today.get(Calendar.YEAR));
-            endCal.set(Calendar.MONTH,        today.get(Calendar.MONTH));
+            endCal.set(Calendar.YEAR, today.get(Calendar.YEAR));
+            endCal.set(Calendar.MONTH, today.get(Calendar.MONTH));
             endCal.set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH));
 
             long now = System.currentTimeMillis();
             return now >= startCal.getTimeInMillis() && now <= endCal.getTimeInMillis();
-        } catch (Exception e) { return false; }
+
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    // Attaches red background + delete icon swipe to any RecyclerView
-    public static void attachSwipeToDelete(RecyclerView rv, OnSwipeListener swipeListener) {
+    // ── Attach red swipe background + delete icon to a RecyclerView ───────
+    public static void attachSwipeToDelete(RecyclerView recyclerView, OnSwipeListener swipeListener) {
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
                 0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
             @Override
-            public boolean onMove(@NonNull RecyclerView r,
-                                  @NonNull RecyclerView.ViewHolder vh,
-                                  @NonNull RecyclerView.ViewHolder t) { return false; }
+            public boolean onMove(@NonNull RecyclerView rv,
+                                   @NonNull RecyclerView.ViewHolder vh,
+                                   @NonNull RecyclerView.ViewHolder target) { return false; }
 
             @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
-                swipeListener.onSwiped(vh.getAdapterPosition());
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                swipeListener.onSwiped(viewHolder.getAdapterPosition());
             }
 
             @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView r,
-                                    @NonNull RecyclerView.ViewHolder vh,
-                                    float dX, float dY, int state, boolean active) {
-                View item = vh.itemView;
-                ColorDrawable bg = new ColorDrawable(Color.parseColor("#C62828"));
-                if (dX < 0)
-                    bg.setBounds(item.getRight() + (int)dX, item.getTop(), item.getRight(), item.getBottom());
-                else
-                    bg.setBounds(item.getLeft(), item.getTop(), item.getLeft() + (int)dX, item.getBottom());
-                bg.draw(c);
+            public void onChildDraw(@NonNull Canvas c,
+                                     @NonNull RecyclerView rv,
+                                     @NonNull RecyclerView.ViewHolder viewHolder,
+                                     float dX, float dY, int actionState, boolean isCurrentlyActive) {
 
-                Drawable icon = ContextCompat.getDrawable(r.getContext(), R.drawable.ic_delete);
+                View itemView = viewHolder.itemView;
+
+                // Red background
+                ColorDrawable background = new ColorDrawable(Color.parseColor("#C62828"));
+                if (dX < 0) {
+                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(),
+                            itemView.getRight(), itemView.getBottom());
+                } else {
+                    background.setBounds(itemView.getLeft(), itemView.getTop(),
+                            itemView.getLeft() + (int) dX, itemView.getBottom());
+                }
+                background.draw(c);
+
+                // Delete icon
+                Drawable icon = ContextCompat.getDrawable(rv.getContext(), R.drawable.ic_delete);
                 if (icon != null) {
                     icon.setTint(Color.WHITE);
-                    int margin = (item.getHeight() - icon.getIntrinsicHeight()) / 2;
-                    int top    = item.getTop() + margin;
-                    int bottom = top + icon.getIntrinsicHeight();
+                    int iconMargin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
+                    int iconTop    = itemView.getTop() + iconMargin;
+                    int iconBottom = iconTop + icon.getIntrinsicHeight();
+
                     if (dX < 0) {
-                        int right = item.getRight() - margin;
-                        icon.setBounds(right - icon.getIntrinsicWidth(), top, right, bottom);
+                        int iconLeft  = itemView.getRight() - iconMargin - icon.getIntrinsicWidth();
+                        int iconRight = itemView.getRight() - iconMargin;
+                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
                     } else {
-                        int left = item.getLeft() + margin;
-                        icon.setBounds(left, top, left + icon.getIntrinsicWidth(), bottom);
+                        int iconLeft  = itemView.getLeft() + iconMargin;
+                        int iconRight = iconLeft + icon.getIntrinsicWidth();
+                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
                     }
                     icon.draw(c);
                 }
-                super.onChildDraw(c, r, vh, dX, dY, state, active);
+
+                super.onChildDraw(c, rv, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
-        }).attachToRecyclerView(rv);
+        }).attachToRecyclerView(recyclerView);
     }
 
     public interface OnSwipeListener {
         void onSwiped(int position);
     }
 
+    // ── ViewHolder ────────────────────────────────────────────────────────
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTopic, tvBatch, tvMonthlyNumber, tvExtra,
-                tvClassTime, tvOnGoing, tvRemaining;
 
-        ViewHolder(View v) {
-            super(v);
-            tvTopic         = v.findViewById(R.id.tvTopic);
-            tvBatch         = v.findViewById(R.id.tvBatch);
-            tvMonthlyNumber = v.findViewById(R.id.tvMonthlyNumber);
-            tvExtra         = v.findViewById(R.id.tvExtra);
-            tvClassTime     = v.findViewById(R.id.tvClassTime);
-            tvOnGoing       = v.findViewById(R.id.tvOnGoing);
-            tvRemaining     = v.findViewById(R.id.tvRemaining);
+        TextView tvTopic, tvBatch, tvMonthlyNumber, tvExtra, tvClassTime,
+                 tvOnGoing, tvRemaining;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            tvTopic         = itemView.findViewById(R.id.tvTopic);
+            tvBatch         = itemView.findViewById(R.id.tvBatch);
+            tvMonthlyNumber = itemView.findViewById(R.id.tvMonthlyNumber);
+            tvExtra         = itemView.findViewById(R.id.tvExtra);
+            tvClassTime     = itemView.findViewById(R.id.tvClassTime);
+            tvOnGoing       = itemView.findViewById(R.id.tvOnGoing);
+            tvRemaining     = itemView.findViewById(R.id.tvRemaining);
         }
     }
 }

@@ -1,57 +1,59 @@
 package com.intisarmuhib.teachsync;
 
-import com.google.firebase.firestore.Exclude;
-
 public class ClassModel {
 
     private String id;
     private String topic;
     private String batch;
     private String batchId;
-    private String classTime;
-    private String date;
+    private String classTime;   // "hh:mm a - hh:mm a" display string
+    private String date;        // "dd MMM yyyy"
+    private String monthlyNumber; // Class number within cycle (stored as String)
     private boolean extra;
-    private int cycleNumber;
-    private int totalInCycle;
 
-    // Object type so Firestore never crashes whether old docs stored this
-    // as Long or new docs store it as String. @Exclude on the getter
-    // prevents Firestore from using it during deserialization.
-    private Object monthlyNumber;
+    // New: cycle tracking (replaces month-key grouping)
+    private int cycleNumber;    // which cycle this class belongs to (1, 2, 3…)
+    private int totalInCycle;   // snapshot of batch's totalMonthlyClasses at save time
 
     public ClassModel() {}
 
-    public String getId()        { return id; }
-    public String getTopic()     { return topic; }
-    public String getBatch()     { return batch; }
-    public String getBatchId()   { return batchId; }
+    public ClassModel(String id, String topic, String batch, String batchId,
+                      String classTime, String date,
+                      String monthlyNumber, boolean extra,
+                      int cycleNumber, int totalInCycle) {
+        this.id = id;
+        this.topic = topic;
+        this.batch = batch;
+        this.batchId = batchId;
+        this.classTime = classTime;
+        this.date = date;
+        this.monthlyNumber = monthlyNumber;
+        this.extra = extra;
+        this.cycleNumber = cycleNumber;
+        this.totalInCycle = totalInCycle;
+    }
+
+    // Getters
+    public String getId() { return id; }
+    public String getTopic() { return topic; }
+    public String getBatch() { return batch; }
+    public String getBatchId() { return batchId; }
     public String getClassTime() { return classTime; }
-    public String getDate()      { return date; }
-    public boolean isExtra()     { return extra; }
-    public int getCycleNumber()  { return cycleNumber; }
+    public String getDate() { return date; }
+    public String getMonthlyNumber() { return monthlyNumber; }
+    public boolean isExtra() { return extra; }
+    public int getCycleNumber() { return cycleNumber; }
     public int getTotalInCycle() { return totalInCycle; }
 
-    @Exclude
-    public String getMonthlyNumber() {
-        if (monthlyNumber == null)            return "";
-        if (monthlyNumber instanceof Long)    return String.valueOf((Long) monthlyNumber);
-        if (monthlyNumber instanceof Integer) return String.valueOf((Integer) monthlyNumber);
-        if (monthlyNumber instanceof Double)  return String.valueOf(((Double) monthlyNumber).longValue());
-        return monthlyNumber.toString();
-    }
-
-    public void setId(String id)               { this.id = id; }
-    public void setTopic(String topic)         { this.topic = topic; }
-    public void setBatch(String batch)         { this.batch = batch; }
-    public void setBatchId(String batchId)     { this.batchId = batchId; }
+    // Setters (all required for Firestore toObject() deserialization)
+    public void setId(String id) { this.id = id; }
+    public void setTopic(String topic) { this.topic = topic; }
+    public void setBatch(String batch) { this.batch = batch; }
+    public void setBatchId(String batchId) { this.batchId = batchId; }
     public void setClassTime(String classTime) { this.classTime = classTime; }
-    public void setDate(String date)           { this.date = date; }
-    public void setExtra(boolean extra)        { this.extra = extra; }
-    public void setCycleNumber(int n)          { this.cycleNumber = n; }
-    public void setTotalInCycle(int n)         { this.totalInCycle = n; }
-
-    // Object setter — Firestore passes Long or String through without crashing
-    public void setMonthlyNumber(Object monthlyNumber) {
-        this.monthlyNumber = monthlyNumber;
-    }
+    public void setDate(String date) { this.date = date; }
+    public void setMonthlyNumber(String monthlyNumber) { this.monthlyNumber = monthlyNumber; }
+    public void setExtra(boolean extra) { this.extra = extra; }
+    public void setCycleNumber(int cycleNumber) { this.cycleNumber = cycleNumber; }
+    public void setTotalInCycle(int totalInCycle) { this.totalInCycle = totalInCycle; }
 }
