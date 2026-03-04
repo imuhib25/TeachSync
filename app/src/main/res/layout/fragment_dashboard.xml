@@ -11,7 +11,6 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNav"
         android:fillViewport="true">
 
         <LinearLayout
@@ -30,36 +29,61 @@
 
                 <ImageView
                     android:id="@+id/profile_pic"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:contentDescription="TODO"
+                    android:layout_width="55dp"
+                    android:layout_height="55dp"
+                    android:contentDescription="Profile Picture"
                     android:src="@drawable/baseline_account_circle_24"
-                    app:tint="@color/white" />
-                <TextView
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/circle_bg"
+                    android:padding="2dp"/>
+
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:id="@+id/welcome_text"
-                    android:text="Welcome back,\nJane Doe"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:layout_marginStart="10dp"/>
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Welcome back,"
+                        android:textColor="#A0A8C0"
+                        android:textSize="13sp"
+                        android:fontFamily="@font/lexend"/>
+
+                    <TextView
+                        android:id="@+id/welcome_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Jane Doe"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/lexend_bold"/>
+                </LinearLayout>
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:id="@+id/btn_notifications"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:background="@drawable/circle_bg"
-                    android:padding="10dp"
+                    android:padding="11dp"
                     android:src="@drawable/outline_notifications_24"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:tint="#FFFFFF" />
+
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:id="@+id/btn_info"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:background="@drawable/circle_bg"
-                    android:padding="10dp"
-                    android:layout_marginStart="5dp"
+                    android:padding="11dp"
+                    android:layout_marginStart="8dp"
                     android:src="@drawable/baseline_info_24"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:tint="#FFFFFF" />
             </LinearLayout>
 
@@ -72,126 +96,196 @@
                 android:layout_marginBottom="20dp">
 
                 <!-- Total Students Card -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/card_blue"
-                    android:padding="16dp"
-                    android:orientation="vertical">
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardBackgroundColor="#1A2140"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#26304D">
 
-                    <TextView
-                        android:text="Total Students"
-                        android:textColor="#DADFFF"
-                        android:textSize="14sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="16dp"
+                        android:orientation="vertical"
+                        android:gravity="center_vertical">
 
-                    <TextView
-                        android:text="12"
-                        android:id="@+id/tvTotalStudents"
-                        android:textColor="#FFFFFF"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Students"
+                            android:textColor="#DADFFF"
+                            android:textSize="13sp"
+                            android:fontFamily="@font/lexend"/>
 
-                    <TextView
-                        android:text="+2 this month"
-                        android:id="@+id/tvTotalStudentsMonth"
-                        android:textColor="#E0E6FF"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:visibility="visible"/>
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvTotalStudents"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="@font/lexend_bold"/>
+
+                        <TextView
+                            android:id="@+id/tvTotalStudentsMonth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+0 this month"
+                            android:textColor="#00E676"
+                            android:textSize="11sp"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/lexend"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
                 <!-- Today's Classes Card -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:background="@drawable/card_dark"
-                    android:padding="16dp"
-                    android:orientation="vertical">
+                    android:layout_marginStart="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardBackgroundColor="#1A2140"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#26304D">
 
-                    <TextView
-                        android:text="Today's Classes"
-                        android:textColor="#AAB2FF"
-                        android:textSize="14sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="16dp"
+                        android:orientation="vertical"
+                        android:gravity="center_vertical">
 
-                    <TextView
-                        android:text="3"
-                        android:textColor="#FFFFFF"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Today's Classes"
+                            android:textColor="#AAB2FF"
+                            android:textSize="13sp"
+                            android:fontFamily="@font/lexend"/>
 
-                    <TextView
-                        android:text="Next: 4:00 PM"
-                        android:textColor="#7F8CFF"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvTodayClasses"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="@font/lexend_bold"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Keep it up!"
+                            android:textColor="#7F8CFF"
+                            android:textSize="11sp"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/lexend"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <!-- Monthly Earnings Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="22dp"
+                app:cardBackgroundColor="#1A2140"
+                app:strokeWidth="1dp"
+                app:strokeColor="#26304D"
+                android:layout_marginBottom="24dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/lblMonthlyEarnings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MONTHLY EARNINGS"
+                        android:textColor="#8F9BFF"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"
+                        android:fontFamily="@font/lexend_bold"/>
+
+                    <TextView
+                        android:id="@+id/tvMonthlyEarnings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/lblMonthlyEarnings"
+                        android:text="৳0"
+                        android:textColor="#FFFFFF"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/lexend_bold"/>
+
+                    <TextView
+                        android:id="@+id/tvMonthlyTarget"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignBaseline="@id/tvMonthlyEarnings"
+                        android:text="Target: ৳0"
+                        android:textColor="#A0A8C0"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/lexend"/>
+
+                    <ProgressBar
+                        android:id="@+id/progressMonthlyEarnings"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_below="@id/tvMonthlyEarnings"
+                        android:progress="0"
+                        android:max="100"
+                        android:layout_marginTop="16dp"
+                        android:progressTint="#5667FF"
+                        android:backgroundTint="#10152C"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Recent Activity Header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_dark"
-                android:padding="20dp"
-                android:orientation="vertical"
-                android:layout_marginBottom="20dp">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="14dp">
 
                 <TextView
-                    android:text="MONTHLY EARNINGS"
-                    android:textColor="#8F9BFF"
-                    android:textSize="12sp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <TextView
-                    android:text="$1,450.00"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Recent Activity"
                     android:textColor="#FFFFFF"
-                    android:textSize="26sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:fontFamily="@font/lexend_bold"/>
 
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:progress="72"
-                    android:max="100"
-                    android:layout_marginTop="16dp"
-                    android:progressTint="#6C7BFF"
-                    android:backgroundTint="#1E2A55"/>
+                <TextView
+                    android:id="@+id/btn_clear_activity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Clear All"
+                    android:textColor="#FF5A5A"
+                    android:textSize="13sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/lexend_medium"
+                    android:padding="4dp"/>
             </LinearLayout>
 
-            <!-- Recent Activity Title -->
-            <TextView
-                android:text="Recent Activity"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <!-- Activity Item -->
             <!-- Recent Activity RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerRecentActivity"

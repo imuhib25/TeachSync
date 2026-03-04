@@ -90,12 +90,22 @@ public class ScheduleFragment extends Fragment {
     private void generateDateChips() {
         dateContainer.removeAllViews();
         Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dayFmt  = new SimpleDateFormat("EEE", Locale.getDefault());
+        
+        // Save today's date string for comparison
         SimpleDateFormat fullFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        String todayStr = fullFmt.format(calendar.getTime());
+
+        // Move to the first day of the current month
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+        SimpleDateFormat dayFmt  = new SimpleDateFormat("EEE", Locale.getDefault());
         SimpleDateFormat ddFmt   = new SimpleDateFormat("dd", Locale.getDefault());
         SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
 
-        for (int i = 0; i < 7; i++) {
+        View todayChip = null;
+
+        for (int i = 0; i < daysInMonth; i++) {
             View chip = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_date_chip, dateContainer, false);
 
@@ -109,11 +119,13 @@ public class ScheduleFragment extends Fragment {
             tvDate.setText(ddFmt.format(date));
             chip.setTag(fullStr);
 
-            if (i == 0) {
+            // Select today's date chip and load classes for it
+            if (fullStr.equals(todayStr)) {
                 chip.setSelected(true);
                 selectedDate = fullStr;
                 tvCurrentMonth.setText(monthFmt.format(date));
                 loadClasses(selectedDate);
+                todayChip = chip;
             }
 
             chip.setOnClickListener(v -> {
@@ -126,6 +138,19 @@ public class ScheduleFragment extends Fragment {
 
             dateContainer.addView(chip);
             calendar.add(Calendar.DATE, 1);
+        }
+
+        // Auto-scroll to today's chip
+        if (todayChip != null) {
+            final View finalTodayChip = todayChip;
+            dateContainer.post(() -> {
+                HorizontalScrollView scroll = (HorizontalScrollView) dateContainer.getParent();
+                if (scroll != null) {
+                    // Center the selected chip in the scroll view
+                    int scrollX = finalTodayChip.getLeft() - (scroll.getWidth() / 2) + (finalTodayChip.getWidth() / 2);
+                    scroll.smoothScrollTo(scrollX, 0);
+                }
+            });
         }
     }
 
@@ -391,7 +416,7 @@ public class ScheduleFragment extends Fragment {
     }
 
     // ── NOTIFICATION & ALARM ──────────────────────────────────────────
-    private static final int NOTIFY_BEFORE_MINUTES = 10;
+    private static final int NOTIFY_BEFORE_MINUTES = 30;
 
     private void scheduleClassNotifications(String classId, String topic, String batchName, String timeText, String date) {
         if (getContext() == null) return;
@@ -401,7 +426,7 @@ public class ScheduleFragment extends Fragment {
 
         long now = System.currentTimeMillis();
 
-        // 1. Reminder Alarm (10 minutes before)
+        // 1. Reminder Alarm (30 minutes before as requested)
         long reminderMillis = triggerAtMillis - (NOTIFY_BEFORE_MINUTES * 60 * 1000L);
         if (reminderMillis > now) {
             scheduleAlarm(classId.hashCode(), reminderMillis, 
@@ -439,7 +464,7 @@ public class ScheduleFragment extends Fragment {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
         } else {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
         }

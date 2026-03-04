@@ -61,10 +61,14 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         String subject = batch.getSubject() != null ? batch.getSubject() : "";
         holder.tvSubject.setText("Subject: " + subject);
 
+        holder.tvEnrolledCount.setText(batch.getEnrolledCount() + " Students");
+
         holder.tvTime.setText(formatTime(batch.getStartTime())
                 + " – " + formatTime(batch.getEndTime()));
 
         holder.tvDuration.setText("Duration: " + formatDuration(batch.getDurationMinutes()));
+        
+        holder.tvPayment.setText("৳ " + (int)batch.getPaymentPerStudent());
 
         // ── Taken / Remaining / Total ─────────────────────────────────────
         int total   = batch.getTotalMonthlyClasses();
@@ -178,7 +182,7 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     // ── ViewHolder ────────────────────────────────────────────────────────
     public static class BatchViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvName, tvSubject, tvTime, tvDuration;
+        TextView tvName, tvSubject, tvTime, tvDuration, tvPayment, tvEnrolledCount;
         TextView tvTaken, tvRemaining, tvTotal;
         ProgressBar progressCycle;
 
@@ -186,8 +190,10 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
             super(itemView);
             tvName        = itemView.findViewById(R.id.tvBatchName);
             tvSubject     = itemView.findViewById(R.id.tvBatchSubject);
+            tvEnrolledCount = itemView.findViewById(R.id.tvEnrolledCount);
             tvTime        = itemView.findViewById(R.id.tvBatchTime);
             tvDuration    = itemView.findViewById(R.id.tvBatchDuration);
+            tvPayment     = itemView.findViewById(R.id.tvPayment);
             tvTaken       = itemView.findViewById(R.id.tvClassesTaken);
             tvRemaining   = itemView.findViewById(R.id.tvClassesRemaining);
             tvTotal       = itemView.findViewById(R.id.tvClassesTotal);

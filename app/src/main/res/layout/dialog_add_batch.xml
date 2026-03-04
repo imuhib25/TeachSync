@@ -23,7 +23,7 @@
         android:layout_marginBottom="12dp"
         android:hint="Batch Name"
         android:textColor="@color/white"
-        android:textColorHint="#49454F" />
+        android:textColorHint="#94A3B8" />
 
     <!-- Subject Dropdown -->
     <com.google.android.material.textfield.TextInputLayout
@@ -31,6 +31,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
+        android:textColorHint="#94A3B8"
+        app:hintTextColor="#3B82F6"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
         <AutoCompleteTextView
@@ -39,8 +41,7 @@
             android:layout_height="wrap_content"
             android:hint="Select Subject"
             android:inputType="none"
-            android:textColor="@color/white"
-            android:textColorHint="#49454F" />
+            android:textColor="@color/white" />
 
     </com.google.android.material.textfield.TextInputLayout>
     <!-- Total Monthly Classes Dropdown -->
@@ -50,6 +51,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Total Monthly Classes"
+        android:textColorHint="#94A3B8"
+        app:hintTextColor="#3B82F6"
         android:layout_marginTop="12dp">
 
         <AutoCompleteTextView
@@ -57,15 +60,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="none"
-            android:textColor="@color/white"
-            android:textColorHint="#49454F" />
+            android:textColor="@color/white" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilPayment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Payment Per Student"
+        android:textColorHint="#94A3B8"
+        app:hintTextColor="#3B82F6"
+        android:layout_marginTop="12dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etPayment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:textColor="@color/white" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutStartTime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp"
+        android:textColorHint="#94A3B8"
+        app:hintTextColor="#3B82F6"
         app:endIconMode="custom"
         app:endIconDrawable="@drawable/ic_clock"
         app:endIconContentDescription="Select Start Time">
@@ -87,6 +110,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
+        android:textColorHint="#94A3B8"
+        app:hintTextColor="#3B82F6"
         app:endIconMode="custom"
         app:endIconDrawable="@drawable/ic_clock"
         app:endIconContentDescription="Select End Time">
@@ -108,7 +133,8 @@
         android:layout_height="wrap_content"
         android:text="Duration: --"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/white"/>
 
     <Button
         android:id="@+id/btnSave"

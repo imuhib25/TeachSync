@@ -51,10 +51,6 @@ public class BatchesActivity extends AppCompatActivity {
 
     private final List<String> subjectList = new ArrayList<>();
 
-    // ═════════════════════════════════════════════════════════════════════
-    // LIFECYCLE
-    // ═════════════════════════════════════════════════════════════════════
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +79,6 @@ public class BatchesActivity extends AppCompatActivity {
 
         backButton.setOnClickListener(v -> onBackPressed());
 
-        // ── FEATURE: red swipe-to-delete (shared helper in BatchAdapter) ─
         BatchAdapter.attachSwipeToDelete(recyclerView, position -> {
             if (position < 0 || position >= batchList.size()) return;
             BatchModel deleted = batchList.get(position);
@@ -115,10 +110,6 @@ public class BatchesActivity extends AppCompatActivity {
         super.onDestroy();
         if (batchesListener != null) batchesListener.remove();
     }
-
-    // ═════════════════════════════════════════════════════════════════════
-    // LOAD DATA
-    // ═════════════════════════════════════════════════════════════════════
 
     private void loadSubjects() {
         db.collection("users").document(userId).collection("subjects")
@@ -155,12 +146,7 @@ public class BatchesActivity extends AppCompatActivity {
                 });
     }
 
-    // ═════════════════════════════════════════════════════════════════════
-    // ADD / EDIT BATCH DIALOG
-    // ═════════════════════════════════════════════════════════════════════
-
     private void showBatchDialog(BatchModel editBatch) {
-        // Reset time fields so previous dialog values don't bleed in
         startHour = -1; startMinute = -1;
         endHour   = -1; endMinute   = -1;
 
@@ -171,6 +157,7 @@ public class BatchesActivity extends AppCompatActivity {
         EditText etName                     = view.findViewById(R.id.etBatchName);
         AutoCompleteTextView etSubject      = view.findViewById(R.id.etSubject);
         AutoCompleteTextView etMonthly      = view.findViewById(R.id.etMonthlyClasses);
+        TextInputEditText etPayment         = view.findViewById(R.id.etPayment);
         TextInputEditText etStart           = view.findViewById(R.id.etStartTime);
         TextInputEditText etEnd             = view.findViewById(R.id.etEndTime);
         TextView tvDuration                 = view.findViewById(R.id.tvDuration);
@@ -189,8 +176,8 @@ public class BatchesActivity extends AppCompatActivity {
             etName.setText(editBatch.getName());
             etSubject.setText(editBatch.getSubject());
             etMonthly.setText(String.valueOf(editBatch.getTotalMonthlyClasses()), false);
+            etPayment.setText(String.valueOf(editBatch.getPaymentPerStudent()));
 
-            // Use Calendar instead of deprecated Date.getHours()
             if (editBatch.getStartTime() != null) {
                 Calendar sc = Calendar.getInstance();
                 sc.setTime(editBatch.getStartTime().toDate());
@@ -215,8 +202,9 @@ public class BatchesActivity extends AppCompatActivity {
             String name       = etName.getText().toString().trim();
             String subject    = etSubject.getText().toString().trim();
             String monthlyStr = etMonthly.getText().toString().trim();
+            String paymentStr = etPayment.getText().toString().trim();
 
-            if (name.isEmpty() || subject.isEmpty() || monthlyStr.isEmpty()) {
+            if (name.isEmpty() || subject.isEmpty() || monthlyStr.isEmpty() || paymentStr.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -237,6 +225,7 @@ public class BatchesActivity extends AppCompatActivity {
 
             long duration = endTotal - startTotal;
             int totalMonthlyClasses = Integer.parseInt(monthlyStr);
+            double paymentPerStudent = Double.parseDouble(paymentStr);
 
             Calendar startCal = Calendar.getInstance();
             startCal.set(Calendar.HOUR_OF_DAY, startHour);
@@ -261,6 +250,7 @@ public class BatchesActivity extends AppCompatActivity {
                     duration, totalMonthlyClasses,
                     isEdit ? editBatch.getCurrentMonthCount() : 0,
                     isEdit ? editBatch.getCycleCount() : 1,
+                    paymentPerStudent,
                     isEdit ? editBatch.getCreatedAt()
                            : new Timestamp(Calendar.getInstance().getTime())
             );
@@ -278,10 +268,6 @@ public class BatchesActivity extends AppCompatActivity {
 
         dialog.show();
     }
-
-    // ═════════════════════════════════════════════════════════════════════
-    // TIME PICKER
-    // ═════════════════════════════════════════════════════════════════════
 
     private void showTimePicker(EditText editText, boolean isStart, TextView tvDuration) {
         int initH = isStart ? (startHour   == -1 ? 12 : startHour)
@@ -313,10 +299,6 @@ public class BatchesActivity extends AppCompatActivity {
     private String formatDuration(long minutes) {
         return (minutes / 60) + "h " + (minutes % 60) + "m";
     }
-
-    // ═════════════════════════════════════════════════════════════════════
-    // SEARCH
-    // ═════════════════════════════════════════════════════════════════════
 
     private void setupSearch() {
         androidx.appcompat.widget.SearchView searchView = findViewById(R.id.searchBatch);

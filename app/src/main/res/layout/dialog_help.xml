@@ -1,20 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="20dp"
-    android:orientation="vertical"
-    android:background="@drawable/bg_dialog"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_width="wrap_content">
+    android:background="@drawable/bg_dialog"
+    android:orientation="vertical"
+    android:padding="20dp">
 
     <TextView
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Help Center"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"/>
+        android:textStyle="bold" />
 
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FAQ" android:textColor="#C7D2FF" android:layout_marginTop="16dp"/>
-    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Guidelines" android:textColor="#C7D2FF" android:layout_marginTop="10dp"/>
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Report a Problem" android:textColor="#C7D2FF" android:layout_marginTop="10dp"/>
+    <TextView
+        android:id="@+id/tvFAQ"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="10dp"
+        android:text="FAQ"
+        android:textColor="#C7D2FF" />
+
+    <TextView
+        android:id="@+id/tvGuidelines"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="10dp"
+        android:text="Guidelines"
+        android:textColor="#C7D2FF" />
+
+    <TextView
+        android:id="@+id/tvReportProblem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="10dp"
+        android:text="Report a Problem"
+        android:textColor="#C7D2FF" />
+
+    <Button
+        android:id="@+id/btnHelpClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

@@ -1,36 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
+    android:layout_height="wrap_content"
     android:background="@drawable/card_dark"
     android:orientation="horizontal"
-    android:padding="16dp"
+    android:padding="14dp"
     android:gravity="center_vertical"
-    android:layout_marginBottom="10dp">
+    android:layout_marginBottom="8dp">
 
     <TextView
-        android:id="@+id/tvActivityTitle"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvActivityContent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Sarah J."
+        android:text="New Student Added: John Doe"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"/>
-
-    <TextView
-        android:id="@+id/tvActivityDesc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Payment received for Calc II"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"/>
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend"
+        android:maxLines="1"
+        android:ellipsize="end"/>
 
     <TextView
         android:id="@+id/tvActivityAmount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:text="+$50.00"
         android:textColor="#00E676"
         android:textStyle="bold"
-        android:textSize="14sp"/>
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_bold"/>
 </LinearLayout>

@@ -1,71 +1,74 @@
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginTop="12dp"
-    app:cardCornerRadius="14dp"
-    app:cardBackgroundColor="#14192D"
-    android:background="@drawable/item_row_click"
-    android:clickable="true"
-    android:focusable="true"
-    android:padding="14dp">
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/bg_date_card"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/ivPaymentMethod"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:background="@drawable/premium_circle_bg"
+        android:src="@drawable/baseline_payments_24"
+        android:contentDescription="Payment Method" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp">
 
-        <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:src="@drawable/baseline_person_24"
-            android:layout_marginStart="10dp"
-            app:tint="#6C7CFF" />
-
-        <LinearLayout
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Jane Cooper"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Mathematics • 12 Jun"
-                android:textColor="#8B90A0"
-                android:textSize="12sp"/>
-        </LinearLayout>
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvTransactionStudent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginEnd="20dp"
-            android:gravity="end">
+            android:text="Student Name"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textSize="14sp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="+$120.00"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="PAID"
-                android:textColor="#2ECC71"
-                android:textSize="11sp"/>
-        </LinearLayout>
-
+        <TextView
+            android:id="@+id/tvTransactionDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15 Sep 2026 • Cash"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"/>
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tvTransactionAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+ ৳ 1,500"
+        android:textColor="#4CAF50"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_marginEnd="12dp"/>
+
+    <ImageView
+        android:id="@+id/ivInvoice"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginEnd="8dp"
+        android:padding="4dp"
+        android:src="@drawable/baseline_info_24"
+        app:tint="#5667FF"
+        android:contentDescription="Generate PDF Invoice" />
+
+    <ImageView
+        android:id="@+id/ivDelete"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_delete"
+        app:tint="#EF4444"
+        android:contentDescription="Delete Transaction" />
+
+</LinearLayout>

@@ -11,8 +11,13 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 
 public class ManageFragment extends Fragment {
@@ -20,6 +25,9 @@ public class ManageFragment extends Fragment {
     MaterialButton btnAddStudents;
     MaterialButton btnAddSubjects;
     MaterialButton btnAddBatches;
+    ImageView profilePic;
+    FirebaseAuth mAuth;
+    FirebaseFirestore firestore;
 
 
     @Override
@@ -28,9 +36,27 @@ public class ManageFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_manage, container, false);
 
-       btnAddBatches = view.findViewById(R.id.btnAddBatches);
+        btnAddBatches = view.findViewById(R.id.btnAddBatches);
         btnAddStudents = view.findViewById(R.id.btnAddStudents);
         btnAddSubjects = view.findViewById(R.id.btnAddSubjects);
+        profilePic = view.findViewById(R.id.manage_profile_pic);
+
+        mAuth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
+
+        if (mAuth.getCurrentUser() != null) {
+            String userId = mAuth.getCurrentUser().getUid();
+            DocumentReference documentReference = firestore.collection("users").document(userId);
+            documentReference.addSnapshotListener((documentSnapshot, e) -> {
+                if (e != null) return;
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    String avatarUrl = documentSnapshot.getString("avatarUrl");
+                    if (avatarUrl != null && !avatarUrl.isEmpty() && isAdded()) {
+                        Glide.with(this).load(avatarUrl).circleCrop().into(profilePic);
+                    }
+                }
+            });
+        }
 
         btnAddStudents.setOnClickListener(new View.OnClickListener() {
             @Override

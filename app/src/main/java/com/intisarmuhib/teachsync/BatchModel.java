@@ -10,17 +10,20 @@ public class BatchModel {
     private Timestamp startTime;
     private Timestamp endTime;
     private long durationMinutes;
-    private int totalMonthlyClasses;   // total classes per cycle (kept same field name for compatibility)
+    private int totalMonthlyClasses;   // total classes per cycle
     private int currentMonthCount;     // classes taken in current cycle
     private int cycleCount;            // how many complete cycles have been done
+    private double paymentPerStudent;  // payment per student for this batch
     private Timestamp createdAt;
+    private int enrolledCount;         // Number of students in this batch
 
     public BatchModel() {} // Required for Firestore
 
     public BatchModel(String id, String name, String subject,
                       Timestamp startTime, Timestamp endTime,
                       long durationMinutes, int totalMonthlyClasses,
-                      int currentMonthCount, int cycleCount, Timestamp createdAt) {
+                      int currentMonthCount, int cycleCount,
+                      double paymentPerStudent, Timestamp createdAt) {
         this.id = id;
         this.name = name;
         this.subject = subject;
@@ -30,6 +33,7 @@ public class BatchModel {
         this.totalMonthlyClasses = totalMonthlyClasses;
         this.currentMonthCount = currentMonthCount;
         this.cycleCount = cycleCount;
+        this.paymentPerStudent = paymentPerStudent;
         this.createdAt = createdAt;
     }
 
@@ -43,7 +47,9 @@ public class BatchModel {
     public int getTotalMonthlyClasses() { return totalMonthlyClasses; }
     public int getCurrentMonthCount() { return currentMonthCount; }
     public int getCycleCount() { return cycleCount; }
+    public double getPaymentPerStudent() { return paymentPerStudent; }
     public Timestamp getCreatedAt() { return createdAt; }
+    public int getEnrolledCount() { return enrolledCount; }
 
     // Derived helpers (not stored in Firestore)
     public int getRemainingInCycle() {
@@ -61,5 +67,7 @@ public class BatchModel {
     public void setTotalMonthlyClasses(int totalMonthlyClasses) { this.totalMonthlyClasses = totalMonthlyClasses; }
     public void setCurrentMonthCount(int currentMonthCount) { this.currentMonthCount = currentMonthCount; }
     public void setCycleCount(int cycleCount) { this.cycleCount = cycleCount; }
+    public void setPaymentPerStudent(double paymentPerStudent) { this.paymentPerStudent = paymentPerStudent; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public void setEnrolledCount(int enrolledCount) { this.enrolledCount = enrolledCount; }
 }

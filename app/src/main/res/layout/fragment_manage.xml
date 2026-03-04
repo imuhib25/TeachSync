@@ -43,10 +43,14 @@
                     android:fontFamily="@font/lexend"/>
             </LinearLayout>
 
-            <View
+            <ImageView
+                android:id="@+id/manage_profile_pic"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
-                android:background="@drawable/premium_circle_bg"/>
+                android:background="@drawable/circle_bg"
+                android:scaleType="centerCrop"
+                android:src="@drawable/baseline_account_circle_24"
+                android:padding="2dp"/>
         </LinearLayout>
 
 
@@ -79,6 +83,7 @@
                 app:icon="@drawable/baseline_person_24"
                 app:iconTint="#6C8CFF"
                 app:iconPadding="16dp"
+                app:iconSize="30dp"
                 app:iconGravity="textStart" />
 
             <!-- Add Batches -->
@@ -87,6 +92,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="85dp"
                 android:padding="20dp"
+                app:iconSize="30dp"
                 android:text="Add Batches"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
@@ -123,6 +129,7 @@
                 app:strokeWidth="1dp"
                 app:elevation="8dp"
                 app:icon="@drawable/outline_book_24"
+                app:iconSize="30dp"
                 app:iconTint="#F4B400"
                 app:iconPadding="16dp"
                 app:iconGravity="textStart" />

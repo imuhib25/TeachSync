@@ -5,57 +5,80 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="16dp"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="6dp"
+    android:layout_marginHorizontal="4dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
     app:cardBackgroundColor="#1A2238"
     app:strokeColor="#26304D"
     app:strokeWidth="1dp">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="18dp"
-        android:orientation="vertical">
+        android:padding="18dp">
 
-        <TextView
-            android:id="@+id/txtName"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/lexend"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/txtBatch"
-            android:textColor="#9AA0C3"
-            android:textSize="14sp"
-            android:fontFamily="@font/lexend_medium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/btn_call_student"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/txtEmail"
-            android:textColor="#9AA0C3"
-            android:textSize="14sp"
-            android:fontFamily="@font/lexend_medium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/txtPhone"
-            android:textColor="#9AA0C3"
-            android:textSize="14sp"
-            android:fontFamily="@font/lexend_medium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/txtParent"
-            android:textColor="#9AA0C3"
-            android:textSize="14sp"
-            android:fontFamily="@font/lexend_medium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/txtName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/lexend_bold"
+                android:text="Student Name"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/txtBatch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/lexend_medium"
+                android:text="Batch: A1"
+                android:textColor="#9AA0C3"
+                android:textSize="14sp" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/txtPhone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/lexend"
+                android:text="+880123456789"
+                android:textColor="#5667FF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtParent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/lexend"
+                android:text="Parent: Mr. Doe"
+                android:textColor="#7E89B0"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btn_call_student"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/circle_bg"
+            android:backgroundTint="#2D3A5D"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="12dp"
+            android:src="@drawable/baseline_phone_24"
+            app:tint="#00E676" />
+
+    </RelativeLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -3,10 +3,15 @@ package com.intisarmuhib.teachsync;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,15 +29,30 @@ import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity {
 
-    // Launcher for POST_NOTIFICATIONS permission (Android 13+)
     private final ActivityResultLauncher<String> notifPermLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.RequestPermission(),
-                    granted -> {
-                        // Nothing to do — AlarmManager handles graceful fallback
-                    });
+                    granted -> {});
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        SharedPreferences prefs = newBase.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String lang = prefs.getString("app_language", "en");
+        super.attachBaseContext(updateLocale(newBase, lang));
+    }
+
+    private Context updateLocale(Context context, String lang) {
+        Locale locale = new Locale(lang);
+        Locale.setDefault(locale);
+        Resources res = context.getResources();
+        Configuration config = new Configuration(res.getConfiguration());
+        config.setLocale(locale);
+        return context.createConfigurationContext(config);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Guard: redirect to login if not authenticated
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -54,11 +73,13 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // AUTO-GENERATE INVOICES ON APP START
+        FinanceAutoGenerator.generateMonthlyInvoices(this, currentUser.getUid());
+
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.dashboard);
         bottomNav.setOnItemSelectedListener(navListener);
 
-        // Only load initial fragment on fresh start (avoid re-loading on rotation)
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()
@@ -70,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         requestNotificationPermissionIfNeeded();
     }
 
-    // ── Bottom nav ────────────────────────────────────────────────────────
     private final NavigationBarView.OnItemSelectedListener navListener = item -> {
         int id = item.getItemId();
         Fragment fragment = null;
@@ -90,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     };
 
-    // ── Logout ────────────────────────────────────────────────────────────
     public void logout(View view) {
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
@@ -99,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    // ── Notification channel (required for Android 8+) ───────────────────
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -113,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ── Request POST_NOTIFICATIONS at runtime (Android 13+ / API 33+) ────
     private void requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this,

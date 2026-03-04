@@ -8,7 +8,7 @@
     android:background="#0B1020">
 
     <TextView
-        android:text="Add Student"
+        android:text="Add/Edit Student"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
@@ -29,24 +29,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
+
     <!-- Batch Dropdown -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutBacth"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginTop="16dp"
+        android:textColorHint="#94A3B8"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+
 
         <AutoCompleteTextView
             android:id="@+id/etBatchName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select Batch"
+            android:hint="Select Batches (Multi)"
             android:inputType="none"
             android:textColor="@color/white"
             android:textColorHint="#49454F" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupBatches"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:chipSpacingHorizontal="8dp"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_height="wrap_content"
@@ -62,6 +73,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
@@ -76,6 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"

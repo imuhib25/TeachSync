@@ -1,63 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
     android:orientation="vertical"
-    android:background="@drawable/bg_dialog" android:layout_height="wrap_content"
-    android:layout_width="match_parent">
+    android:padding="20dp">
 
     <TextView
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Personal Information"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"/>
+        android:textStyle="bold" />
 
     <EditText
-        android:layout_height="50dp"
+        android:id="@+id/etProfileName"
         android:layout_width="match_parent"
-        android:paddingStart="10dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/custom_edittext"
         android:hint="Full Name"
+        android:paddingStart="10dp"
         android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0"
-        android:background="@drawable/custom_edittext"
-        android:layout_marginTop="16dp"/>
+        android:textColorHint="#7E89B0" />
 
     <EditText
-        android:layout_height="50dp"
+        android:id="@+id/etProfilePhone"
         android:layout_width="match_parent"
-        android:paddingStart="10dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/custom_edittext"
         android:hint="Phone"
+        android:paddingStart="10dp"
         android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0"
-        android:background="@drawable/custom_edittext"
-        android:layout_marginTop="12dp"/>
+        android:textColorHint="#7E89B0" />
 
     <EditText
-        android:layout_height="50dp"
+        android:id="@+id/etProfileDOB"
         android:layout_width="match_parent"
-        android:paddingStart="10dp"
-        android:hint="Date of Birth (DD/MM/YYYY)"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/custom_edittext"
-        android:layout_marginTop="12dp"/>
+        android:hint="Date of Birth (DD/MM/YYYY)"
+        android:paddingStart="10dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#7E89B0" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         android:orientation="horizontal">
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Change"
-        android:background="@drawable/btn_dialog_outline"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cancel"
-        android:layout_marginStart="10dp"
-        android:background="@drawable/btn_dialog_outline"/>
+
+        <Button
+            android:id="@+id/btnUpdateProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_dialog_outline"
+            android:text="Update"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btnCancelProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/btn_dialog_outline"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 
 </LinearLayout>

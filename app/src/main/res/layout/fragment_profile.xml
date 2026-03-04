@@ -27,7 +27,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:background="@drawable/item_row_click"
-                android:contentDescription="TODO"
+                android:contentDescription="Settings"
                 android:src="@drawable/baseline_settings_24"
                 app:tint="#9AA4C7" />
 
@@ -47,6 +47,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/item_row_click"
                 android:src="@drawable/baseline_logout_24"
+                android:contentDescription="Logout"
                 app:tint="#FF5A5A" />
         </LinearLayout>
 
@@ -62,11 +63,15 @@
 
                 <!-- Avatar -->
                 <FrameLayout
+                    android:id="@+id/layout_profile_image"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center">
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:focusable="true">
 
                     <ImageView
+                        android:id="@+id/profile_image"
                         android:layout_width="120dp"
                         android:layout_height="120dp"
                         android:src="@drawable/baseline_person_24"
@@ -74,11 +79,15 @@
                         android:background="@drawable/circle_bg"
                         android:padding="4dp" />
 
-                    <View
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:layout_gravity="bottom|end"
-                        android:background="@drawable/online_dot" />
+                        android:src="@drawable/baseline_account_circle_24"
+                        android:background="@drawable/premium_circle_bg"
+                        android:padding="6dp"
+                        app:tint="#FFFFFF"
+                        android:contentDescription="Edit Avatar" />
                 </FrameLayout>
 
                 <TextView
@@ -191,6 +200,7 @@
                 <include android:id="@+id/profile_help" layout="@layout/item_help_center" />
                 <include android:id="@+id/profile_contact" layout="@layout/item_contact_support" />
                 <LinearLayout
+                    android:id="@+id/profile_about_footer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"

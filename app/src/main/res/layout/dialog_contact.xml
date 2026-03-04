@@ -1,30 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="20dp"
-    android:orientation="vertical"
-    android:background="@drawable/bg_dialog"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_width="wrap_content">
+    android:background="@drawable/bg_dialog"
+    android:orientation="vertical"
+    android:padding="20dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Contact Support"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"/>
+        android:textStyle="bold" />
 
     <Button
+        android:id="@+id/btnEmailSupport"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:text="Email Support"
         android:layout_marginTop="16dp"
-        android:background="@drawable/btn_dialog_outline"/>
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Email Support"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:id="@+id/btnLiveChat"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/btn_dialog_outline"
         android:text="Live Chat"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_dialog_outline"/>
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btnSendFeedback"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Send Feedback"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btnContactClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

@@ -1,36 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
     android:orientation="vertical"
-    android:background="@drawable/bg_dialog" android:layout_height="wrap_content"
-    android:layout_width="match_parent">
+    android:padding="20dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Login &amp; Security"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"/>
+        android:textStyle="bold" />
 
     <Button
+        android:id="@+id/btnChangePassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Change Password"
         android:layout_marginTop="16dp"
-        android:background="@drawable/btn_dialog_outline"/>
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Change Password"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:id="@+id/btnDeleteAccount"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Two-Factor Authentication"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_dialog_outline"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/btn_dialog_outline"
         android:text="Delete Account"
-        android:layout_marginTop="10dp"
-        android:textColor="#FF0000"
-        android:background="@drawable/btn_dialog_outline"/>
+        android:textAllCaps="false"
+        android:textColor="#FF4B4B" />
+
+    <Button
+        android:id="@+id/btnSecurityCancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/btn_dialog_outline"
+        android:text="Cancel"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

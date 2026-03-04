@@ -1,0 +1,73 @@
+<resources>
+    <string name="app_name">টিচসিংক</string>
+    <string name="dashboard">ড্যাশবোর্ড</string>
+    <string name="schedule">শিডিউল</string>
+    <string name="manage">ম্যানেজ</string>
+    <string name="finance">ফাইন্যান্স</string>
+    <string name="profile">প্রোফাইল</string>
+
+    <string name="add_student">ছাত্র যোগ করুন</string>
+    <string name="edit_student">ছাত্র এডিট করুন</string>
+    <string name="save_student">ছাত্র সেভ করুন</string>
+    <string name="update_student">ছাত্র আপডেট করুন</string>
+    <string name="student_name">ছাত্রের নাম</string>
+    <string name="select_student">ছাত্র নির্বাচন করুন</string>
+    <string name="student_updated">ছাত্র সফলভাবে আপডেট করা হয়েছে</string>
+    <string name="student_deleted">ছাত্র সফলভাবে মুছে ফেলা হয়েছে</string>
+    <string name="student_not_found">ছাত্র খুঁজে পাওয়া যায়নি</string>
+    <string name="batches_label">ব্যাচ: %1$s</string>
+    <string name="parent_label">অভিভাবক: %1$s</string>
+    <string name="phone_unavailable">ফোন নম্বর পাওয়া যায়নি</string>
+    <string name="error_name_batch_required">নাম এবং অন্তত একটি ব্যাচ প্রয়োজন</string>
+
+    <string name="add_batch">ব্যাচ যোগ করুন</string>
+    <string name="batch_name">ব্যাচ নাম</string>
+    <string name="subject">বিষয়</string>
+    <string name="enrolled_students">%1$d জন ছাত্র</string>
+
+    <string name="finance_dashboard">ফাইন্যান্স ড্যাশবোর্ড</string>
+    <string name="collected">সংগৃহীত</string>
+    <string name="due">বাকি</string>
+    <string name="overdue">সময়োত্তীর্ণ</string>
+    <string name="expected">প্রত্যাশিত</string>
+    <string name="monthly_target">মাসিক লক্ষ্য</string>
+    <string name="batch_breakdown">ব্যাচ ব্রেকডাউন</string>
+    <string name="recent_transactions">সাম্প্রতিক লেনদেন</string>
+
+    <string name="add_transaction">লেনদেন যোগ করুন</string>
+    <string name="edit_transaction">লেনদেন এডিট করুন</string>
+    <string name="update_transaction">লেনদেন আপডেট করুন</string>
+    <string name="amount">পরিমাণ</string>
+    <string name="transaction_date">লেনদেনের তারিখ</string>
+    <string name="payment_method">পেমেন্ট পদ্ধতি</string>
+    <string name="cash">নগদ</string>
+    <string name="bkash">বিকাশ</string>
+    <string name="nagad">নগদ (নগদ অ্যাপ)</string>
+    <string name="save_transaction">লেনদেন সেভ করুন</string>
+    <string name="delete_transaction">লেনদেন মুছে ফেলুন</string>
+    <string name="delete_confirm_msg">আপনি কি নিশ্চিত যে আপনি এই লেনদেনটি মুছে ফেলতে চান?</string>
+    <string name="transaction_deleted">লেনদেন সফলভাবে মুছে ফেলা হয়েছে</string>
+    <string name="transaction_updated">লেনদেন সফলভাবে আপডেট করা হয়েছে</string>
+    <string name="payment_recorded">পেমেন্ট সফলভাবে রেকর্ড করা হয়েছে</string>
+    <string name="invalid_amount">দয়া করে সঠিক পরিমাণ লিখুন</string>
+    <string name="save_failed">সেভ করতে ব্যর্থ হয়েছে</string>
+    <string name="update_failed">আপডেট করতে ব্যর্থ হয়েছে</string>
+
+    <string name="storage_unavailable">এক্সটার্নাল স্টোরেজ পাওয়া যাচ্ছে না</string>
+    <string name="pdf_generated">ইনভয়েস পিডিএফ সফলভাবে তৈরি হয়েছে</string>
+    <string name="save_pdf_failed">পিডিএফ সেভ করতে ব্যর্থ হয়েছে</string>
+    <string name="no_pdf_viewer">এই ডিভাইসে কোন পিডিএফ ভিউয়ার খুঁজে পাওয়া যায়নি</string>
+
+    <string name="settings">সেটিংস</string>
+    <string name="language">ভাষা</string>
+    <string name="theme">থিম</string>
+    <string name="currency">কারেন্সি</string>
+    <string name="logout">লগ আউট</string>
+
+    <string name="english">ইংরেজি</string>
+    <string name="bengali">বাংলা</string>
+    <string name="save">সেভ করুন</string>
+    <string name="cancel">বাতিল করুন</string>
+    <string name="delete">মুছে ফেলুন</string>
+    <string name="choose_language">ভাষা নির্বাচন করুন</string>
+</resources>
