@@ -14,35 +14,53 @@
         android:layout_height="wrap_content"
         android:id="@+id/TopLayout"
         android:orientation="horizontal">
-    <ImageButton
-        android:id="@+id/back_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/baseline_arrow_back_ios_24"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="16dp"
-        android:background="#0B1020"
-        app:tint="@color/white" />
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Manage Subjects"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:layout_margin="16dp"/>
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_arrow_back_ios_24"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="16dp"
+            android:background="#0B1020"
+            app:tint="@color/white" />
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage Subjects"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_margin="16dp"/>
     </LinearLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/scrollCommonSubjects"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/TopLayout"
+        android:scrollbars="none"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupCommon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true">
+            <!-- Chips will be added programmatically -->
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
 
     <!-- Search Bar -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchSub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/TopLayout"
+        android:layout_below="@id/scrollCommonSubjects"
         android:layout_margin="16dp"
         android:background="@drawable/search_bg"
-        android:queryHint="Search subjects..." />
+        android:queryHint="Search subjects..."
+        app:iconifiedByDefault="false" />
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

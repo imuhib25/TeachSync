@@ -42,7 +42,8 @@
         android:layout_below="@id/TopLayout"
         android:layout_margin="16dp"
         android:background="@drawable/search_bg"
-        android:queryHint="Search batches..." />
+        android:queryHint="Search batches..."
+        app:iconifiedByDefault="false" />
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

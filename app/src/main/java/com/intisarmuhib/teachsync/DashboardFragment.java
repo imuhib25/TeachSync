@@ -54,6 +54,14 @@ public class DashboardFragment extends Fragment {
 
     private ListenerRegistration transactionsListener;
     private ListenerRegistration invoicesListener;
+    private ListenerRegistration batchesRecentListener;
+    private ListenerRegistration studentsRecentListener;
+    private ListenerRegistration classesRecentListener;
+    private ListenerRegistration transactionsRecentListener;
+    private ListenerRegistration totalStudentsListener;
+    private ListenerRegistration todayClassesListener;
+    private ListenerRegistration userListener;
+
     private double currentMonthCollected = 0;
     private double currentMonthExpected = 0;
 
@@ -83,7 +91,7 @@ public class DashboardFragment extends Fragment {
             userId = mAuth.getCurrentUser().getUid();
 
             DocumentReference documentReference = firestore.collection("users").document(userId);
-            documentReference.addSnapshotListener((documentSnapshot, e) -> {
+            userListener = documentReference.addSnapshotListener((documentSnapshot, e) -> {
                 if (e != null || !isAdded()) return;
                 if (documentSnapshot != null && documentSnapshot.exists()) {
                     String fName = documentSnapshot.getString("fName");
@@ -179,11 +187,17 @@ public class DashboardFragment extends Fragment {
     }
 
     private void clearActivity() {
-        if (!recentActivities.isEmpty()) {
-            recentActivities.clear();
-            activityAdapter.notifyDataSetChanged();
-            Toast.makeText(getContext(), "Activity cleared", Toast.LENGTH_SHORT).show();
-        }
+        if (getContext() == null) return;
+        
+        recentActivities.clear();
+        activityAdapter.notifyDataSetChanged();
+        
+        getContext().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                .edit()
+                .putLong("last_cleared_activities", System.currentTimeMillis())
+                .apply();
+                
+        Toast.makeText(getContext(), "Activity cleared", Toast.LENGTH_SHORT).show();
     }
 
     private void showCreditsDialog() {
@@ -234,7 +248,7 @@ public class DashboardFragment extends Fragment {
 
     private void updateTotalStudents() {
         if (userId == null) return;
-        firestore.collection("users").document(userId).collection("students")
+        totalStudentsListener = firestore.collection("users").document(userId).collection("students")
                 .addSnapshotListener((value, error) -> {
                     if (error != null || value == null || !isAdded()) return;
 
@@ -262,7 +276,7 @@ public class DashboardFragment extends Fragment {
     private void updateTodayClasses() {
         if (userId == null) return;
         String todayDate = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
-        firestore.collection("users").document(userId).collection("classes")
+        todayClassesListener = firestore.collection("users").document(userId).collection("classes")
                 .whereEqualTo("date", todayDate)
                 .addSnapshotListener((value, error) -> {
                     if (error != null || value == null || !isAdded()) return;
@@ -272,25 +286,30 @@ public class DashboardFragment extends Fragment {
 
     private void updateRecentActivity(){
         if (userId == null) return;
-        firestore.collection("users").document(userId).collection("batches")
+        
+        batchesRecentListener = firestore.collection("users").document(userId).collection("batches")
                 .orderBy("createdAt", Query.Direction.DESCENDING).limit(3)
-                .addSnapshotListener((value, error) -> processChanges(value, "New Batch: ", "name"));
+                .addSnapshotListener((value, error) -> processChanges(value, "New Batch: ", "name", "createdAt"));
 
-        firestore.collection("users").document(userId).collection("students")
+        studentsRecentListener = firestore.collection("users").document(userId).collection("students")
                 .orderBy("createdAt", Query.Direction.DESCENDING).limit(3)
-                .addSnapshotListener((value, error) -> processChanges(value, "New Student: ", "name"));
+                .addSnapshotListener((value, error) -> processChanges(value, "New Student: ", "name", "createdAt"));
 
-        firestore.collection("users").document(userId).collection("classes")
+        classesRecentListener = firestore.collection("users").document(userId).collection("classes")
                 .orderBy("createdAt", Query.Direction.DESCENDING).limit(3)
-                .addSnapshotListener((value, error) -> processChanges(value, "Class Added: ", "topic"));
+                .addSnapshotListener((value, error) -> processChanges(value, "Class Added: ", "topic", "createdAt"));
 
-        firestore.collection("users").document(userId).collection("transactions")
+        transactionsRecentListener = firestore.collection("users").document(userId).collection("transactions")
                 .orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                 .addSnapshotListener((value, error) -> {
                     if (error != null || value == null || !isAdded()) return;
+                    long lastCleared = getContext().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getLong("last_cleared_activities", 0);
                     for (DocumentChange dc : value.getDocumentChanges()) {
                         if (dc.getType() == DocumentChange.Type.ADDED) {
                             TransactionModel transaction = dc.getDocument().toObject(TransactionModel.class);
+                            if (transaction.getTimestamp() != null && transaction.getTimestamp().toDate().getTime() <= lastCleared) {
+                                continue;
+                            }
                             recentActivities.add(0, new ActivityModel("Received from " + transaction.getStudentName(), "+" + currencySymbol + (int)transaction.getAmount()));
                             activityAdapter.notifyItemInserted(0);
                         }
@@ -298,10 +317,15 @@ public class DashboardFragment extends Fragment {
                 });
     }
 
-    private void processChanges(com.google.firebase.firestore.QuerySnapshot value, String prefix, String field) {
-        if (value != null && isAdded()) {
+    private void processChanges(com.google.firebase.firestore.QuerySnapshot value, String prefix, String field, String timeField) {
+        if (value != null && isAdded() && getContext() != null) {
+            long lastCleared = getContext().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getLong("last_cleared_activities", 0);
             for (DocumentChange dc : value.getDocumentChanges()) {
                 if (dc.getType() == DocumentChange.Type.ADDED) {
+                    Timestamp ts = dc.getDocument().getTimestamp(timeField);
+                    if (ts != null && ts.toDate().getTime() <= lastCleared) {
+                        continue;
+                    }
                     String content = prefix + dc.getDocument().getString(field);
                     recentActivities.add(0, new ActivityModel(content, ""));
                     activityAdapter.notifyItemInserted(0);
@@ -315,5 +339,12 @@ public class DashboardFragment extends Fragment {
         super.onDestroyView();
         if (transactionsListener != null) transactionsListener.remove();
         if (invoicesListener != null) invoicesListener.remove();
+        if (batchesRecentListener != null) batchesRecentListener.remove();
+        if (studentsRecentListener != null) studentsRecentListener.remove();
+        if (classesRecentListener != null) classesRecentListener.remove();
+        if (transactionsRecentListener != null) transactionsRecentListener.remove();
+        if (totalStudentsListener != null) totalStudentsListener.remove();
+        if (todayClassesListener != null) todayClassesListener.remove();
+        if (userListener != null) userListener.remove();
     }
 }

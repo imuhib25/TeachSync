@@ -258,20 +258,37 @@ public class StudentsActivity extends AppCompatActivity {
                 
                 StudentModel deletedStudent = studentList.get(position);
 
-                WriteBatch batch = db.batch();
-                batch.delete(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()));
+                // Perform the deletion
+                db.runTransaction(transaction -> {
+                    transaction.delete(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()));
 
-                for (String bName : deletedStudent.getBatches()) {
-                    String bId = batchIdMap.get(bName);
-                    if (bId != null) {
-                        batch.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                                "enrolledCount", FieldValue.increment(-1));
+                    for (String bName : deletedStudent.getBatches()) {
+                        String bId = batchIdMap.get(bName);
+                        if (bId != null) {
+                            transaction.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                                    "enrolledCount", FieldValue.increment(-1));
+                        }
                     }
-                }
-
-                batch.commit().addOnSuccessListener(aVoid -> {
-                    Toast.makeText(StudentsActivity.this, "Student Deleted", Toast.LENGTH_SHORT).show();
-                    // updateEmptyState() will be called automatically by the snapshot listener
+                    return null;
+                }).addOnSuccessListener(aVoid -> {
+                    Snackbar.make(recyclerView, "Student deleted", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO", v -> {
+                                db.runTransaction(undoTransaction -> {
+                                    undoTransaction.set(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()), deletedStudent);
+                                    
+                                    for (String bName : deletedStudent.getBatches()) {
+                                        String bId = batchIdMap.get(bName);
+                                        if (bId != null) {
+                                            undoTransaction.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                                                    "enrolledCount", FieldValue.increment(1));
+                                        }
+                                    }
+                                    return null;
+                                });
+                            }).show();
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(StudentsActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    adapter.notifyItemChanged(position);
                 });
             }
 

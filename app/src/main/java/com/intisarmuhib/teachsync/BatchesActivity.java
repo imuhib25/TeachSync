@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -26,12 +28,16 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class BatchesActivity extends AppCompatActivity {
 
@@ -50,6 +56,10 @@ public class BatchesActivity extends AppCompatActivity {
     private int endHour   = -1, endMinute   = -1;
 
     private final List<String> subjectList = new ArrayList<>();
+    private final String[] commonSubjects = {
+            "Mathematics", "Physics", "Chemistry", "Biology", "English",
+            "ICT", "Higher Math", "Accounting", "Finance", "Economics"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,8 +95,7 @@ public class BatchesActivity extends AppCompatActivity {
             batchList.remove(position);
             adapter.notifyItemRemoved(position);
 
-            db.collection("users").document(userId)
-                    .collection("batches").document(deleted.getId()).delete();
+            deleteBatchAndInvoices(deleted);
 
             Snackbar.make(recyclerView, "Batch deleted", Snackbar.LENGTH_LONG)
                     .setAction("UNDO", v -> {
@@ -105,6 +114,25 @@ public class BatchesActivity extends AppCompatActivity {
         setupSearch();
     }
 
+    private void deleteBatchAndInvoices(BatchModel batch) {
+        db.collection("users").document(userId)
+                .collection("batches").document(batch.getId()).delete();
+
+        // Also delete all invoices associated with this batch
+        db.collection("users").document(userId)
+                .collection("invoices")
+                .whereEqualTo("batchId", batch.getId())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    WriteBatch writeBatch = db.batch();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        writeBatch.delete(doc.getReference());
+                    }
+                    writeBatch.commit().addOnFailureListener(e -> 
+                        Log.e("BatchesActivity", "Failed to delete invoices for batch: " + batch.getId(), e));
+                });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -115,11 +143,16 @@ public class BatchesActivity extends AppCompatActivity {
         db.collection("users").document(userId).collection("subjects")
                 .get()
                 .addOnSuccessListener(snap -> {
-                    subjectList.clear();
+                    Set<String> uniqueSubjects = new HashSet<>();
+                    for (String s : commonSubjects) {
+                        uniqueSubjects.add(s);
+                    }
                     for (DocumentSnapshot doc : snap) {
                         String name = doc.getString("name");
-                        if (name != null) subjectList.add(name);
+                        if (name != null) uniqueSubjects.add(name);
                     }
+                    subjectList.clear();
+                    subjectList.addAll(uniqueSubjects);
                 })
                 .addOnFailureListener(e -> Log.e("BatchesActivity", "loadSubjects failed", e));
     }
@@ -217,10 +250,11 @@ public class BatchesActivity extends AppCompatActivity {
             int startTotal = startHour * 60 + startMinute;
             int endTotal   = endHour   * 60 + endMinute;
 
+            boolean isOvernight = false;
             if (endTotal <= startTotal) {
-                Snackbar.make(view, "End time must be after start time",
-                        Snackbar.LENGTH_SHORT).show();
-                return;
+                // If end is before or same as start, assume it's the next day
+                endTotal += 24 * 60;
+                isOvernight = true;
             }
 
             long duration = endTotal - startTotal;
@@ -238,6 +272,9 @@ public class BatchesActivity extends AppCompatActivity {
             endCal.set(Calendar.MINUTE, endMinute);
             endCal.set(Calendar.SECOND, 0);
             endCal.set(Calendar.MILLISECOND, 0);
+            if (isOvernight) {
+                endCal.add(Calendar.DAY_OF_MONTH, 1);
+            }
 
             String id = isEdit ? editBatch.getId()
                     : db.collection("users").document(userId)
@@ -255,6 +292,8 @@ public class BatchesActivity extends AppCompatActivity {
                            : new Timestamp(Calendar.getInstance().getTime())
             );
 
+            checkAndAddSubject(subject);
+
             db.collection("users").document(userId)
                     .collection("batches").document(id)
                     .set(batch)
@@ -267,6 +306,23 @@ public class BatchesActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void checkAndAddSubject(String name) {
+        db.collection("users").document(userId).collection("subjects")
+                .whereEqualTo("name", name)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (snap.isEmpty()) {
+                        String subId = db.collection("users").document(userId).collection("subjects").document().getId();
+                        SubjectModel newSub = new SubjectModel(subId, name, "", "");
+                        db.collection("users").document(userId).collection("subjects").document(subId).set(newSub);
+                        // Update local list for immediate reflection in next dialog open
+                        if (!subjectList.contains(name)) {
+                            subjectList.add(name);
+                        }
+                    }
+                });
     }
 
     private void showTimePicker(EditText editText, boolean isStart, TextView tvDuration) {
@@ -285,8 +341,11 @@ public class BatchesActivity extends AppCompatActivity {
 
     private void calculateDuration(TextView tv) {
         if (startHour == -1 || endHour == -1) return;
-        int diff = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
-        if (diff > 0) tv.setText("Duration: " + formatDuration(diff));
+        int startTotal = startHour * 60 + startMinute;
+        int endTotal = endHour * 60 + endMinute;
+        int diff = endTotal - startTotal;
+        if (diff <= 0) diff += 24 * 60; // Handle overnight batches
+        tv.setText("Duration: " + formatDuration(diff));
     }
 
     private String formatTime(int h, int m) {
