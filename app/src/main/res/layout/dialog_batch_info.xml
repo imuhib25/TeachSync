@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#1E293B">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvInfoTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Batch Details"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:divider="?android:attr/dividerVertical"
+            android:showDividers="middle">
+
+            <TextView
+                android:id="@+id/tvInfoName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoSubject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Subject: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Time: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoDuration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Duration: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoEnrolled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enrolled: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoPayment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Payment: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoClasses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Monthly Classes: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvInfoCycle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cycle Count: "
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp"/>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2A3A50"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Class History"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+            android:id="@+id/calendarView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:mcv_selectionColor="#5C6BC0"
+            app:mcv_showOtherDates="all"
+            android:background="#1E293B"
+            app:mcv_calendarMode="month"
+            app:mcv_headerTextAppearance="@style/TextAppearance.AppCompat.Medium"
+            app:mcv_weekDayTextAppearance="@style/TextAppearance.AppCompat.Small"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp">
+
+            <View android:layout_width="12dp" android:layout_height="12dp" android:background="#4CAF50" android:layout_marginEnd="4dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Done" android:textColor="#94A3B8" android:textSize="10sp" android:layout_marginEnd="8dp"/>
+
+            <View android:layout_width="12dp" android:layout_height="12dp" android:background="#F44336" android:layout_marginEnd="4dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Postponed" android:textColor="#94A3B8" android:textSize="10sp" android:layout_marginEnd="8dp"/>
+
+            <View android:layout_width="12dp" android:layout_height="12dp" android:background="#FF9800" android:layout_marginEnd="4dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Resched" android:textColor="#94A3B8" android:textSize="10sp" android:layout_marginEnd="8dp"/>
+
+            <View android:layout_width="12dp" android:layout_height="12dp" android:background="#2196F3" android:layout_marginEnd="4dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Extra" android:textColor="#94A3B8" android:textSize="10sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportPdf"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Export PDF"
+                app:cornerRadius="12dp"
+                android:backgroundTint="#43A047"
+                app:icon="@android:drawable/ic_menu_save"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCloseInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Close"
+                app:cornerRadius="12dp"
+                android:backgroundTint="#5C6BC0"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

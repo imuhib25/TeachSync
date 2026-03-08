@@ -33,6 +33,7 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
 
     public interface OnBatchClickListener {
         void onBatchClick(BatchModel batch);
+        void onInfoClick(BatchModel batch);
     }
 
     public BatchAdapter(Context context,
@@ -94,6 +95,10 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onBatchClick(batch);
+        });
+
+        holder.tvBtnDetails.setOnClickListener(v -> {
+            if (listener != null) listener.onInfoClick(batch);
         });
     }
 
@@ -182,7 +187,7 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     // ── ViewHolder ────────────────────────────────────────────────────────
     public static class BatchViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvName, tvSubject, tvTime, tvDuration, tvPayment, tvEnrolledCount;
+        TextView tvName, tvSubject, tvTime, tvDuration, tvPayment, tvEnrolledCount, tvBtnDetails;
         TextView tvTaken, tvRemaining, tvTotal;
         ProgressBar progressCycle;
 
@@ -197,6 +202,7 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
             tvTaken       = itemView.findViewById(R.id.tvClassesTaken);
             tvRemaining   = itemView.findViewById(R.id.tvClassesRemaining);
             tvTotal       = itemView.findViewById(R.id.tvClassesTotal);
+            tvBtnDetails  = itemView.findViewById(R.id.tvBtnDetails);
             progressCycle = itemView.findViewById(R.id.progressCycle);
         }
     }

@@ -10,7 +10,7 @@ constraintlayout = "2.1.4"
 googleGmsGoogleServices = "4.4.4"
 firebaseAuth = "24.0.1"
 firebaseFirestore = "26.1.0"
-materialCalendarview = "2.0.1"
+materialCalendarview = "1.4.3"
 glide = "4.16.0"
 
 [libraries]

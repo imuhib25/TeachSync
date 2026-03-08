@@ -1,6 +1,10 @@
 package com.intisarmuhib.teachsync;
 
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,17 +12,21 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -28,15 +36,31 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.prolificinteractive.materialcalendarview.CalendarDay;
+import com.prolificinteractive.materialcalendarview.DayViewDecorator;
+import com.prolificinteractive.materialcalendarview.DayViewFacade;
+import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
+import com.prolificinteractive.materialcalendarview.spans.DotSpan;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public class BatchesActivity extends AppCompatActivity {
@@ -82,7 +106,17 @@ public class BatchesActivity extends AppCompatActivity {
         userId = currentUser.getUid();
 
         batchList = new ArrayList<>();
-        adapter   = new BatchAdapter(this, batchList, this::showBatchDialog);
+        adapter   = new BatchAdapter(this, batchList, new BatchAdapter.OnBatchClickListener() {
+            @Override
+            public void onBatchClick(BatchModel batch) {
+                showBatchDialog(batch);
+            }
+
+            @Override
+            public void onInfoClick(BatchModel batch) {
+                showBatchInfoDialog(batch);
+            }
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
@@ -112,6 +146,160 @@ public class BatchesActivity extends AppCompatActivity {
 
         fabAdd.setOnClickListener(v -> showBatchDialog(null));
         setupSearch();
+    }
+
+    private void showBatchInfoDialog(BatchModel batch) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_batch_info, null);
+        dialog.setContentView(view);
+
+        TextView tvName = view.findViewById(R.id.tvInfoName);
+        TextView tvSubject = view.findViewById(R.id.tvInfoSubject);
+        TextView tvTime = view.findViewById(R.id.tvInfoTime);
+        TextView tvDuration = view.findViewById(R.id.tvInfoDuration);
+        TextView tvEnrolled = view.findViewById(R.id.tvInfoEnrolled);
+        TextView tvPayment = view.findViewById(R.id.tvInfoPayment);
+        TextView tvClasses = view.findViewById(R.id.tvInfoClasses);
+        TextView tvCycle = view.findViewById(R.id.tvInfoCycle);
+        MaterialCalendarView calendarView = view.findViewById(R.id.calendarView);
+
+        SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        String timeStr = timeFmt.format(batch.getStartTime().toDate()) + " - " + timeFmt.format(batch.getEndTime().toDate());
+
+        long minutes = batch.getDurationMinutes();
+        String durationStr = (minutes / 60) + "h " + (minutes % 60) + "m";
+
+        tvName.setText("Name: " + batch.getName());
+        tvSubject.setText("Subject: " + batch.getSubject());
+        tvTime.setText("Time: " + timeStr);
+        tvDuration.setText("Duration: " + durationStr);
+        tvEnrolled.setText("Enrolled Students: " + batch.getEnrolledCount());
+        tvPayment.setText("Payment per Student: ৳ " + (int)batch.getPaymentPerStudent());
+        tvClasses.setText("Monthly Classes: " + batch.getTotalMonthlyClasses());
+        tvCycle.setText("Cycle Count: " + batch.getCycleCount());
+
+        // Fetch classes for this batch
+        db.collection("users").document(userId).collection("classes")
+                .whereEqualTo("batchId", batch.getId())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<ClassModel> history = new ArrayList<>();
+                    HashSet<CalendarDay> completedDays = new HashSet<>();
+                    HashSet<CalendarDay> postponedDays = new HashSet<>();
+                    HashSet<CalendarDay> rescheduledDays = new HashSet<>();
+                    HashSet<CalendarDay> extraDays = new HashSet<>();
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        ClassModel cm = doc.toObject(ClassModel.class);
+                        if (cm != null) {
+                            history.add(cm);
+                            try {
+                                Date date = sdf.parse(cm.getDate());
+                                if (date != null) {
+                                    CalendarDay day = CalendarDay.from(date);
+                                    if (cm.isExtra()) {
+                                        extraDays.add(day);
+                                    } else if ("completed".equals(cm.getStatus())) {
+                                        completedDays.add(day);
+                                    } else if ("postponed".equals(cm.getStatus())) {
+                                        postponedDays.add(day);
+                                    } else if ("rescheduled".equals(cm.getStatus())) {
+                                        rescheduledDays.add(day);
+                                    }
+                                }
+                            } catch (ParseException e) {
+                                Log.e("BatchesActivity", "Date parse error", e);
+                            }
+                        }
+                    }
+
+                    calendarView.addDecorators(
+                            new EventDecorator(Color.parseColor("#4CAF50"), completedDays),
+                            new EventDecorator(Color.parseColor("#F44336"), postponedDays),
+                            new EventDecorator(Color.parseColor("#FF9800"), rescheduledDays),
+                            new EventDecorator(Color.parseColor("#2196F3"), extraDays)
+                    );
+
+                    view.findViewById(R.id.btnExportPdf).setOnClickListener(v -> exportBatchToPdf(batch, history));
+                });
+
+        view.findViewById(R.id.btnCloseInfo).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void exportBatchToPdf(BatchModel batch, List<ClassModel> classes) {
+        String fileName = "Batch_" + batch.getName().replaceAll("\\s+", "_") + ".pdf";
+        File pdfFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
+
+        try {
+            PdfWriter writer = new PdfWriter(new FileOutputStream(pdfFile));
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            document.add(new Paragraph("Batch Report: " + batch.getName()).setFontSize(20).setBold());
+            document.add(new Paragraph("Subject: " + batch.getSubject()));
+            document.add(new Paragraph("Cycle Count: " + batch.getCycleCount()));
+            document.add(new Paragraph("Monthly Classes: " + batch.getTotalMonthlyClasses()));
+            document.add(new Paragraph("Enrolled Students: " + batch.getEnrolledCount()));
+            document.add(new Paragraph("\nClass History:").setBold());
+
+            Table table = new Table(new float[]{1, 2, 2, 2});
+            table.addHeaderCell("Date");
+            table.addHeaderCell("Topic");
+            table.addHeaderCell("Status");
+            table.addHeaderCell("Type");
+
+            for (ClassModel cm : classes) {
+                table.addCell(cm.getDate());
+                table.addCell(cm.getTopic() != null ? cm.getTopic() : "");
+                table.addCell(cm.getStatus().toUpperCase());
+                table.addCell(cm.isExtra() ? "EXTRA" : "NORMAL");
+            }
+
+            document.add(table);
+            document.close();
+
+            Toast.makeText(this, "PDF Exported to Documents", Toast.LENGTH_SHORT).show();
+            openPdf(pdfFile);
+
+        } catch (Exception e) {
+            Log.e("BatchesActivity", "PDF Export error", e);
+            Toast.makeText(this, "Failed to export PDF", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openPdf(File file) {
+        Uri path = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(path, "application/pdf");
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "No PDF viewer found", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static class EventDecorator implements DayViewDecorator {
+        private final int color;
+        private final HashSet<CalendarDay> dates;
+
+        public EventDecorator(int color, Collection<CalendarDay> dates) {
+            this.color = color;
+            this.dates = new HashSet<>(dates);
+        }
+
+        @Override
+        public boolean shouldDecorate(CalendarDay day) {
+            return dates.contains(day);
+        }
+
+        @Override
+        public void decorate(DayViewFacade view) {
+            view.addSpan(new DotSpan(8, color));
+        }
     }
 
     private void deleteBatchAndInvoices(BatchModel batch) {
@@ -195,6 +383,15 @@ public class BatchesActivity extends AppCompatActivity {
         TextInputEditText etEnd             = view.findViewById(R.id.etEndTime);
         TextView tvDuration                 = view.findViewById(R.id.tvDuration);
 
+        // Class Scheduling Views
+        RadioGroup radioGroupSchedule = view.findViewById(R.id.radioGroupSchedule);
+        RadioButton radioAuto = view.findViewById(R.id.radioAuto);
+        RadioButton radioManual = view.findViewById(R.id.radioManual);
+        LinearLayout layoutAutoSchedule = view.findViewById(R.id.layoutAutoSchedule);
+        TextView manualTxt = view.findViewById(R.id.manualTxt);
+        AutoCompleteTextView etWeeklyClasses = view.findViewById(R.id.etWeeklyClasses);
+        ChipGroup chipGroupDays = view.findViewById(R.id.chipGroupDays);
+
         etSubject.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, subjectList));
 
@@ -202,6 +399,21 @@ public class BatchesActivity extends AppCompatActivity {
         for (int i = 1; i <= 31; i++) numbers.add(String.valueOf(i));
         etMonthly.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, numbers));
+
+        List<String> weeklyNumbers = new ArrayList<>();
+        for (int i = 1; i <= 7; i++) weeklyNumbers.add(String.valueOf(i));
+        etWeeklyClasses.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, weeklyNumbers));
+
+        radioGroupSchedule.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioAuto) {
+                layoutAutoSchedule.setVisibility(View.VISIBLE);
+                manualTxt.setVisibility(View.GONE);
+            } else {
+                layoutAutoSchedule.setVisibility(View.GONE);
+                manualTxt.setVisibility(View.VISIBLE);
+            }
+        });
 
         boolean isEdit = editBatch != null;
 
@@ -226,6 +438,11 @@ public class BatchesActivity extends AppCompatActivity {
                 etEnd.setText(formatTime(endHour, endMinute));
             }
             tvDuration.setText("Duration: " + formatDuration(editBatch.getDurationMinutes()));
+            
+            // For editing, we might want to hide auto-scheduling to prevent duplicates
+            radioGroupSchedule.setVisibility(View.GONE);
+            layoutAutoSchedule.setVisibility(View.GONE);
+            manualTxt.setVisibility(View.GONE);
         }
 
         etStart.setOnClickListener(v -> showTimePicker(etStart, true, tvDuration));
@@ -252,7 +469,6 @@ public class BatchesActivity extends AppCompatActivity {
 
             boolean isOvernight = false;
             if (endTotal <= startTotal) {
-                // If end is before or same as start, assume it's the next day
                 endTotal += 24 * 60;
                 isOvernight = true;
             }
@@ -297,7 +513,12 @@ public class BatchesActivity extends AppCompatActivity {
             db.collection("users").document(userId)
                     .collection("batches").document(id)
                     .set(batch)
-                    .addOnSuccessListener(aVoid -> dialog.dismiss())
+                    .addOnSuccessListener(aVoid -> {
+                        if (!isEdit && radioAuto.isChecked()) {
+                            autoScheduleClasses(batch, etWeeklyClasses.getText().toString(), chipGroupDays);
+                        }
+                        dialog.dismiss();
+                    })
                     .addOnFailureListener(e -> {
                         Log.e("BatchesActivity", "Save batch failed", e);
                         Toast.makeText(this, "Failed to save. Try again.",
@@ -306,6 +527,51 @@ public class BatchesActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void autoScheduleClasses(BatchModel batch, String weeklyStr, ChipGroup chipGroup) {
+        if (weeklyStr.isEmpty()) return;
+        int weeklyCount = Integer.parseInt(weeklyStr);
+        List<Integer> selectedDays = new ArrayList<>();
+        if (((Chip)chipGroup.findViewById(R.id.chipSun)).isChecked()) selectedDays.add(Calendar.SUNDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipMon)).isChecked()) selectedDays.add(Calendar.MONDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipTue)).isChecked()) selectedDays.add(Calendar.TUESDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipWed)).isChecked()) selectedDays.add(Calendar.WEDNESDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipThu)).isChecked()) selectedDays.add(Calendar.THURSDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipFri)).isChecked()) selectedDays.add(Calendar.FRIDAY);
+        if (((Chip)chipGroup.findViewById(R.id.chipSat)).isChecked()) selectedDays.add(Calendar.SATURDAY);
+
+        if (selectedDays.isEmpty()) return;
+
+        WriteBatch writeBatch = db.batch();
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        String timeRange = formatTime(startHour, startMinute) + " - " + formatTime(endHour, endMinute);
+
+        int classesAdded = 0;
+        // Schedule for the next 30 days or until totalMonthlyClasses is reached
+        for (int i = 0; i < 60 && classesAdded < batch.getTotalMonthlyClasses(); i++) {
+            if (selectedDays.contains(cal.get(Calendar.DAY_OF_WEEK))) {
+                classesAdded++;
+                String classId = db.collection("users").document(userId).collection("classes").document().getId();
+                ClassModel classModel = new ClassModel(
+                        classId,
+                        "Initial Class",
+                        batch.getName(),
+                        batch.getId(),
+                        timeRange,
+                        dateFormat.format(cal.getTime()),
+                        String.valueOf(classesAdded),
+                        false,
+                        1,
+                        batch.getTotalMonthlyClasses(),
+                        new Timestamp(Calendar.getInstance().getTime())
+                );
+                writeBatch.set(db.collection("users").document(userId).collection("classes").document(classId), classModel);
+            }
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        writeBatch.commit();
     }
 
     private void checkAndAddSubject(String name) {
@@ -317,7 +583,6 @@ public class BatchesActivity extends AppCompatActivity {
                         String subId = db.collection("users").document(userId).collection("subjects").document().getId();
                         SubjectModel newSub = new SubjectModel(subId, name, "", "");
                         db.collection("users").document(userId).collection("subjects").document(subId).set(newSub);
-                        // Update local list for immediate reflection in next dialog open
                         if (!subjectList.contains(name)) {
                             subjectList.add(name);
                         }
@@ -344,7 +609,7 @@ public class BatchesActivity extends AppCompatActivity {
         int startTotal = startHour * 60 + startMinute;
         int endTotal = endHour * 60 + endMinute;
         int diff = endTotal - startTotal;
-        if (diff <= 0) diff += 24 * 60; // Handle overnight batches
+        if (diff <= 0) diff += 24 * 60;
         tv.setText("Duration: " + formatDuration(diff));
     }
 

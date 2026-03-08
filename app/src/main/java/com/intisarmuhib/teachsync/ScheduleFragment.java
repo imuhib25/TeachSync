@@ -1,6 +1,7 @@
 package com.intisarmuhib.teachsync;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -36,7 +37,10 @@ public class ScheduleFragment extends Fragment {
     private LinearLayout dateContainer;
     private TextView tvSessionCount;
     private TextView tvCurrentMonth;
+    private TextView tvClassHeader;
     private RecyclerView recyclerView;
+    private HorizontalScrollView dateScrollView;
+    private TextView btnClearData;
 
     // ── Firebase ──────────────────────────────────────────────────────────
     private FirebaseFirestore db;
@@ -45,6 +49,7 @@ public class ScheduleFragment extends Fragment {
     // ── State ─────────────────────────────────────────────────────────────
     private ClassAdapter adapter;
     private String selectedDate;
+    private Calendar currentCalendar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -55,10 +60,16 @@ public class ScheduleFragment extends Fragment {
         dateContainer  = view.findViewById(R.id.dateContainer);
         tvSessionCount = view.findViewById(R.id.tvSessionCount);
         tvCurrentMonth = view.findViewById(R.id.tvCurrentMonth);
+        tvClassHeader  = view.findViewById(R.id.tvClassHeader);
         recyclerView   = view.findViewById(R.id.classRecycler);
+        dateScrollView = view.findViewById(R.id.dateScrollView);
+        btnClearData   = view.findViewById(R.id.btnClearData);
         FloatingActionButton fabAdd = view.findViewById(R.id.fabAdd);
+        ImageButton btnPrevMonth = view.findViewById(R.id.btnPrevMonth);
+        ImageButton btnNextMonth = view.findViewById(R.id.btnNextMonth);
 
         db = FirebaseFirestore.getInstance();
+        currentCalendar = Calendar.getInstance();
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ClassAdapter();
@@ -75,7 +86,55 @@ public class ScheduleFragment extends Fragment {
         adapter.setListener(this::showClassBottomSheet);
         fabAdd.setOnClickListener(v -> showClassBottomSheet(null));
 
+        btnPrevMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, -1);
+            generateDateChips();
+        });
+
+        btnNextMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, 1);
+            generateDateChips();
+        });
+
+        btnClearData.setOnClickListener(v -> showClearDataConfirmation());
+
         return view;
+    }
+
+    private void showClearDataConfirmation() {
+        if (selectedDate == null) return;
+        new AlertDialog.Builder(getContext())
+                .setTitle("Clear Data")
+                .setMessage("Are you sure you want to delete all classes for " + selectedDate + "?")
+                .setPositiveButton("Clear All", (dialog, which) -> clearAllClassesForSelectedDate())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void clearAllClassesForSelectedDate() {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null || selectedDate == null) return;
+
+        db.collection("users").document(userId)
+                .collection("classes")
+                .whereEqualTo("date", selectedDate)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        ClassModel model = doc.toObject(ClassModel.class);
+                        if (model != null) {
+                            if (!model.isExtra()) {
+                                decrementBatchCount(model.getBatchId());
+                            }
+                            cancelNotifications(doc.getId());
+                        }
+                        batch.delete(doc.getReference());
+                    }
+                    batch.commit().addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Cleared all classes for " + selectedDate, Toast.LENGTH_SHORT).show();
+                    });
+                });
     }
 
     @Override
@@ -89,21 +148,26 @@ public class ScheduleFragment extends Fragment {
 
     private void generateDateChips() {
         dateContainer.removeAllViews();
-        Calendar calendar = Calendar.getInstance();
         
-        // Save today's date string for comparison
+        Calendar tempCal = (Calendar) currentCalendar.clone();
+        Calendar today = Calendar.getInstance();
+        
         SimpleDateFormat fullFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-        String todayStr = fullFmt.format(calendar.getTime());
+        String todayStr = fullFmt.format(today.getTime());
 
-        // Move to the first day of the current month
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        // Move to the first day of the selected month
+        tempCal.set(Calendar.DAY_OF_MONTH, 1);
+        int daysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
         SimpleDateFormat dayFmt  = new SimpleDateFormat("EEE", Locale.getDefault());
         SimpleDateFormat ddFmt   = new SimpleDateFormat("dd", Locale.getDefault());
         SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
 
-        View todayChip = null;
+        tvCurrentMonth.setText(monthFmt.format(tempCal.getTime()));
+
+        View selectedChip = null;
+        boolean isCurrentMonth = tempCal.get(Calendar.MONTH) == today.get(Calendar.MONTH) && 
+                                tempCal.get(Calendar.YEAR) == today.get(Calendar.YEAR);
 
         for (int i = 0; i < daysInMonth; i++) {
             View chip = LayoutInflater.from(getContext())
@@ -112,45 +176,67 @@ public class ScheduleFragment extends Fragment {
             TextView tvDay  = chip.findViewById(R.id.tvDay);
             TextView tvDate = chip.findViewById(R.id.tvDate);
 
-            Date date      = calendar.getTime();
+            Date date      = tempCal.getTime();
             String fullStr = fullFmt.format(date);
 
             tvDay.setText(dayFmt.format(date));
             tvDate.setText(ddFmt.format(date));
             chip.setTag(fullStr);
 
-            // Select today's date chip and load classes for it
-            if (fullStr.equals(todayStr)) {
+            // Logic to determine which date to select initially
+            boolean shouldSelect = false;
+            if (isCurrentMonth) {
+                if (fullStr.equals(todayStr)) {
+                    shouldSelect = true;
+                }
+            } else if (i == 0) {
+                // Select 1st day of the month if it's not the current month
+                shouldSelect = true;
+            }
+
+            if (shouldSelect) {
                 chip.setSelected(true);
                 selectedDate = fullStr;
-                tvCurrentMonth.setText(monthFmt.format(date));
+                updateClassHeader(date);
                 loadClasses(selectedDate);
-                todayChip = chip;
+                selectedChip = chip;
             }
 
             chip.setOnClickListener(v -> {
                 clearChipSelection();
                 chip.setSelected(true);
                 selectedDate = fullStr;
-                tvCurrentMonth.setText(monthFmt.format(date));
+                updateClassHeader(date);
                 loadClasses(selectedDate);
             });
 
             dateContainer.addView(chip);
-            calendar.add(Calendar.DATE, 1);
+            tempCal.add(Calendar.DATE, 1);
         }
 
-        // Auto-scroll to today's chip
-        if (todayChip != null) {
-            final View finalTodayChip = todayChip;
+        // Auto-scroll to selected chip
+        if (selectedChip != null) {
+            final View finalSelectedChip = selectedChip;
             dateContainer.post(() -> {
-                HorizontalScrollView scroll = (HorizontalScrollView) dateContainer.getParent();
-                if (scroll != null) {
-                    // Center the selected chip in the scroll view
-                    int scrollX = finalTodayChip.getLeft() - (scroll.getWidth() / 2) + (finalTodayChip.getWidth() / 2);
-                    scroll.smoothScrollTo(scrollX, 0);
+                if (dateScrollView != null) {
+                    int scrollX = finalSelectedChip.getLeft() - (dateScrollView.getWidth() / 2) + (finalSelectedChip.getWidth() / 2);
+                    dateScrollView.smoothScrollTo(scrollX, 0);
                 }
             });
+        }
+    }
+
+    private void updateClassHeader(Date date) {
+        Calendar today = Calendar.getInstance();
+        Calendar target = Calendar.getInstance();
+        target.setTime(date);
+
+        if (today.get(Calendar.YEAR) == target.get(Calendar.YEAR) &&
+            today.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR)) {
+            tvClassHeader.setText("Today's Classes");
+        } else {
+            String datePart = new SimpleDateFormat("dd MMMM", Locale.getDefault()).format(date);
+            tvClassHeader.setText(datePart + "'s Classes");
         }
     }
 
@@ -312,42 +398,73 @@ public class ScheduleFragment extends Fragment {
                 finalTimeText = "";
             }
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("topic", topic);
-            data.put("batch", batchName);
-            data.put("batchId", batchId);
-            data.put("date", date);
-            data.put("extra", isExtra);
-            data.put("classTime", finalTimeText);
-            data.put("createdAt", Timestamp.now());
-            data.put("monthlyNumber", classNumber);
-            data.put("cycleNumber",   cycleCount);
-            data.put("totalInCycle",  total);
+            if (finalTimeText.isEmpty()) {
+                executeSave(isEdit, existingModel, topic, batchName, batchId, date, isExtra, classNumber, finalTimeText, cycleCount, total, taken, batchRef, dialog);
+                return;
+            }
 
-            DocumentReference classRef = (isEdit && existingModel != null) ? db.collection("users").document(userId).collection("classes").document(existingModel.getId()) : db.collection("users").document(userId).collection("classes").document();
-
-            classRef.set(data).addOnSuccessListener(aVoid -> {
-                if (!isAdded()) return;
-                if (!isEdit && !isExtra) {
-                    batchRef.update("currentMonthCount", taken + 1);
-                }
-                dialog.dismiss();
-                Snackbar.make(recyclerView, "Class saved", Snackbar.LENGTH_SHORT).show();
-
-                if (!date.equals(selectedDate)) {
-                    selectedDate = date;
-                    for (int i = 0; i < dateContainer.getChildCount(); i++) {
-                        View chip = dateContainer.getChildAt(i);
-                        if (date.equals(chip.getTag())) {
-                            clearChipSelection();
-                            chip.setSelected(true);
-                            break;
+            // Conflict check
+            db.collection("users").document(userId).collection("classes")
+                    .whereEqualTo("date", date)
+                    .whereEqualTo("classTime", finalTimeText)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!isAdded()) return;
+                        for (DocumentSnapshot doc : querySnapshot) {
+                            if (isEdit && existingModel != null && doc.getId().equals(existingModel.getId())) continue;
+                            
+                            String conflictBatch = doc.getString("batch");
+                            Toast.makeText(getContext(), "Already " + conflictBatch + " is added on " + finalTimeText, Toast.LENGTH_LONG).show();
+                            return;
                         }
+
+                        executeSave(isEdit, existingModel, topic, batchName, batchId, date, isExtra, classNumber, finalTimeText, cycleCount, total, taken, batchRef, dialog);
+                    });
+        });
+    }
+
+    private void executeSave(boolean isEdit, @Nullable ClassModel existingModel, String topic, String batchName, String batchId, String date, boolean isExtra, String classNumber, String finalTimeText, int cycleCount, int total, int currentTaken, DocumentReference batchRef, BottomSheetDialog dialog) {
+        String userId = FirebaseAuth.getInstance().getUid();
+        Map<String, Object> data = new HashMap<>();
+        data.put("topic", topic);
+        data.put("batch", batchName);
+        data.put("batchId", batchId);
+        data.put("date", date);
+        data.put("extra", isExtra);
+        data.put("classTime", finalTimeText);
+        data.put("createdAt", Timestamp.now());
+        data.put("monthlyNumber", classNumber);
+        data.put("cycleNumber",   cycleCount);
+        data.put("totalInCycle",  total);
+
+        DocumentReference classRef = (isEdit && existingModel != null) ? db.collection("users").document(userId).collection("classes").document(existingModel.getId()) : db.collection("users").document(userId).collection("classes").document();
+
+        classRef.set(data).addOnSuccessListener(aVoid -> {
+            if (!isAdded()) return;
+            if (!isEdit && !isExtra) {
+                batchRef.update("currentMonthCount", currentTaken + 1);
+            }
+            dialog.dismiss();
+            Snackbar.make(recyclerView, "Class saved", Snackbar.LENGTH_SHORT).show();
+
+            if (!date.equals(selectedDate)) {
+                selectedDate = date;
+                // Try to find the chip for the new date and select it
+                for (int i = 0; i < dateContainer.getChildCount(); i++) {
+                    View chip = dateContainer.getChildAt(i);
+                    if (date.equals(chip.getTag())) {
+                        clearChipSelection();
+                        chip.setSelected(true);
+                        try {
+                            Date d = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(date);
+                            updateClassHeader(d);
+                        } catch (Exception ignored) {}
+                        break;
                     }
-                    loadClasses(selectedDate);
                 }
-                scheduleClassNotifications(classRef.getId(), topic, batchName, finalTimeText, date);
-            });
+                loadClasses(selectedDate);
+            }
+            scheduleClassNotifications(classRef.getId(), topic, batchName, finalTimeText, date);
         });
     }
 
@@ -410,8 +527,10 @@ public class ScheduleFragment extends Fragment {
         String userId = FirebaseAuth.getInstance().getUid();
         DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batchId);
         batchRef.get().addOnSuccessListener(snap -> {
-            int newVal = Math.max(0, snap.getLong("currentMonthCount").intValue() - 1);
-            batchRef.update("currentMonthCount", newVal);
+            if (snap.exists()) {
+                int newVal = Math.max(0, snap.getLong("currentMonthCount").intValue() - 1);
+                batchRef.update("currentMonthCount", newVal);
+            }
         });
     }
 

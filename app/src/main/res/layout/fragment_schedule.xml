@@ -14,20 +14,46 @@
         android:background="#0B1023"
         android:padding="16dp">
 
-        <!-- Month name header e.g. "March 2025" -->
-        <TextView
-            android:id="@+id/tvCurrentMonth"
+        <!-- Month name header with navigation -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#9FA8DA"
-            android:textSize="13sp"
-            android:textAllCaps="true"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="6dp"
-            android:text=""/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp">
+
+            <ImageButton
+                android:id="@+id/btnPrevMonth"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_previous"
+                app:tint="#9FA8DA" />
+
+            <TextView
+                android:id="@+id/tvCurrentMonth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#9FA8DA"
+                android:textSize="13sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:gravity="center"
+                android:text=""/>
+
+            <ImageButton
+                android:id="@+id/btnNextMonth"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_next"
+                app:tint="#9FA8DA" />
+        </LinearLayout>
 
         <!-- Date chip strip -->
         <HorizontalScrollView
+            android:id="@+id/dateScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scrollbars="none">
@@ -40,13 +66,35 @@
                 android:paddingVertical="8dp"/>
         </HorizontalScrollView>
 
-        <TextView
-            android:text="Today's Classes"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:layout_marginTop="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp">
+
+            <TextView
+                android:id="@+id/tvClassHeader"
+                android:text="Today's Classes"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/btnClearData"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear Data"
+                android:textColor="#FF5252"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvSessionCount"

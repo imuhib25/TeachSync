@@ -17,6 +17,9 @@ public class ClassModel {
     // New: cycle tracking (replaces month-key grouping)
     private int cycleNumber;    // which cycle this class belongs to (1, 2, 3…)
     private int totalInCycle;   // snapshot of batch's totalMonthlyClasses at save time
+    
+    // Status: "scheduled", "completed", "postponed", "rescheduled"
+    private String status = "scheduled";
 
     public ClassModel() {}
 
@@ -35,6 +38,7 @@ public class ClassModel {
         this.cycleNumber = cycleNumber;
         this.totalInCycle = totalInCycle;
         this.createdAt = createdAt;
+        this.status = "scheduled";
     }
 
     // Getters
@@ -49,6 +53,7 @@ public class ClassModel {
     public int getCycleNumber() { return cycleNumber; }
     public int getTotalInCycle() { return totalInCycle; }
     public Timestamp getCreatedAt() { return createdAt; }
+    public String getStatus() { return status; }
 
     // Setters (all required for Firestore toObject() deserialization)
     public void setId(String id) { this.id = id; }
@@ -62,4 +67,5 @@ public class ClassModel {
     public void setCycleNumber(int cycleNumber) { this.cycleNumber = cycleNumber; }
     public void setTotalInCycle(int totalInCycle) { this.totalInCycle = totalInCycle; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public void setStatus(String status) { this.status = status; }
 }
