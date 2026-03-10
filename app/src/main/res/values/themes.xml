@@ -12,5 +12,13 @@
         <item name="android:padding">16dp</item>
     </style>
 
+    <style name="CalendarWhiteText" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <style name="CalendarWhiteTextSmall" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
     <style name="Theme.TeachSync" parent="Base.Theme.TeachSync" />
 </resources>

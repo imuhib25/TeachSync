@@ -27,7 +27,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -304,7 +303,7 @@ public class ScheduleFragment extends Fragment {
             try {
                 Date d = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(selectedDate);
                 if (d != null) tvMonthLabel.setText(new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(d));
-            } catch (ParseException ignored) {}
+            } catch (Exception ignored) {}
         }
 
         if (isEdit) {
@@ -470,11 +469,63 @@ public class ScheduleFragment extends Fragment {
 
     private void resetCycle(String batchId, DocumentReference batchRef) {
         batchRef.get().addOnSuccessListener(snap -> {
-            int newCycle = snap.getLong("cycleCount").intValue() + 1;
+            BatchModel batch = snap.toObject(BatchModel.class);
+            if (batch == null) return;
+            
+            int newCycle = batch.getCycleCount() + 1;
             Map<String, Object> update = new HashMap<>();
             update.put("currentMonthCount", 0);
             update.put("cycleCount", newCycle);
-            batchRef.update(update).addOnSuccessListener(v -> Snackbar.make(recyclerView, "Cycle reset!", Snackbar.LENGTH_SHORT).show());
+            batchRef.update(update).addOnSuccessListener(v -> {
+                Snackbar.make(recyclerView, "Cycle reset!", Snackbar.LENGTH_SHORT).show();
+                if (batch.isAutoSchedule()) {
+                    autoScheduleNextCycle(batch, newCycle);
+                }
+            });
+        });
+    }
+
+    private void autoScheduleNextCycle(BatchModel batch, int newCycle) {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
+
+        WriteBatch writeBatch = db.batch();
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        
+        SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        String timeRange = timeFmt.format(batch.getStartTime().toDate()) + " - " + timeFmt.format(batch.getEndTime().toDate());
+
+        List<Integer> selectedDays = batch.getSelectedDays();
+        if (selectedDays == null || selectedDays.isEmpty()) return;
+
+        int classesAdded = 0;
+        for (int i = 0; i < 60 && classesAdded < batch.getTotalMonthlyClasses(); i++) {
+            if (selectedDays.contains(cal.get(Calendar.DAY_OF_WEEK))) {
+                classesAdded++;
+                String classId = db.collection("users").document(userId).collection("classes").document().getId();
+                ClassModel classModel = new ClassModel(
+                        classId,
+                        "Initial Class",
+                        batch.getName(),
+                        batch.getId(),
+                        timeRange,
+                        dateFormat.format(cal.getTime()),
+                        String.valueOf(classesAdded),
+                        false,
+                        newCycle,
+                        batch.getTotalMonthlyClasses(),
+                        new Timestamp(Calendar.getInstance().getTime())
+                );
+                writeBatch.set(db.collection("users").document(userId).collection("classes").document(classId), classModel);
+            }
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        final int finalClassesAdded = classesAdded;
+        writeBatch.commit().addOnSuccessListener(aVoid -> {
+            if (isAdded()) {
+                Toast.makeText(getContext(), finalClassesAdded + " classes scheduled for new cycle", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
