@@ -402,8 +402,9 @@ public class BatchesActivity extends AppCompatActivity {
         RadioButton radioAuto = view.findViewById(R.id.radioAuto);
         RadioButton radioManual = view.findViewById(R.id.radioManual);
         LinearLayout layoutAutoSchedule = view.findViewById(R.id.layoutAutoSchedule);
-        TextView manualTxt = view.findViewById(R.id.manualTxt);
-        AutoCompleteTextView etWeeklyClasses = view.findViewById(R.id.etWeeklyClasses);
+        LinearLayout layoutManualSchedule = view.findViewById(R.id.layoutManualSchedule);
+        MaterialCalendarView calendarManual = view.findViewById(R.id.calendarManual);
+        calendarManual.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
         ChipGroup chipGroupDays = view.findViewById(R.id.chipGroupDays);
 
         etSubject.setAdapter(new ArrayAdapter<>(this,
@@ -414,18 +415,13 @@ public class BatchesActivity extends AppCompatActivity {
         etMonthly.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, numbers));
 
-        List<String> weeklyNumbers = new ArrayList<>();
-        for (int i = 1; i <= 7; i++) weeklyNumbers.add(String.valueOf(i));
-        etWeeklyClasses.setAdapter(new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, weeklyNumbers));
-
         radioGroupSchedule.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioAuto) {
                 layoutAutoSchedule.setVisibility(View.VISIBLE);
-                manualTxt.setVisibility(View.GONE);
+                layoutManualSchedule.setVisibility(View.GONE);
             } else {
                 layoutAutoSchedule.setVisibility(View.GONE);
-                manualTxt.setVisibility(View.VISIBLE);
+                layoutManualSchedule.setVisibility(View.VISIBLE);
             }
         });
 
@@ -457,8 +453,7 @@ public class BatchesActivity extends AppCompatActivity {
             if (editBatch.isAutoSchedule()) {
                 radioAuto.setChecked(true);
                 layoutAutoSchedule.setVisibility(View.VISIBLE);
-                manualTxt.setVisibility(View.GONE);
-                etWeeklyClasses.setText(String.valueOf(editBatch.getWeeklyCount()), false);
+                layoutManualSchedule.setVisibility(View.GONE);
                 List<Integer> days = editBatch.getSelectedDays();
                 if (days != null) {
                     if (days.contains(Calendar.SATURDAY)) ((Chip)view.findViewById(R.id.chipSat)).setChecked(true);
@@ -472,7 +467,7 @@ public class BatchesActivity extends AppCompatActivity {
             } else {
                 radioManual.setChecked(true);
                 layoutAutoSchedule.setVisibility(View.GONE);
-                manualTxt.setVisibility(View.VISIBLE);
+                layoutManualSchedule.setVisibility(View.VISIBLE);
             }
         }
 
@@ -542,9 +537,6 @@ public class BatchesActivity extends AppCompatActivity {
             boolean isAuto = radioAuto.isChecked();
             batch.setAutoSchedule(isAuto);
             if (isAuto) {
-                String weekly = etWeeklyClasses.getText().toString();
-                batch.setWeeklyCount(weekly.isEmpty() ? 0 : Integer.parseInt(weekly));
-                
                 List<Integer> selectedDays = new ArrayList<>();
                 if (((Chip)view.findViewById(R.id.chipSun)).isChecked()) selectedDays.add(Calendar.SUNDAY);
                 if (((Chip)view.findViewById(R.id.chipMon)).isChecked()) selectedDays.add(Calendar.MONDAY);
@@ -554,6 +546,7 @@ public class BatchesActivity extends AppCompatActivity {
                 if (((Chip)view.findViewById(R.id.chipFri)).isChecked()) selectedDays.add(Calendar.FRIDAY);
                 if (((Chip)view.findViewById(R.id.chipSat)).isChecked()) selectedDays.add(Calendar.SATURDAY);
                 batch.setSelectedDays(selectedDays);
+                batch.setWeeklyCount(selectedDays.size());
             }
 
             checkAndAddSubject(subject);
@@ -563,10 +556,9 @@ public class BatchesActivity extends AppCompatActivity {
                     .set(batch)
                     .addOnSuccessListener(aVoid -> {
                         if (isAuto) {
-                            autoScheduleClasses(batch, etWeeklyClasses.getText().toString(), chipGroupDays);
-                        } else if (isEdit && editBatch.isAutoSchedule()) {
-                            // Switched from Auto to Manual: clean up non-completed classes
-                            cleanupScheduledClasses(batch.getId());
+                            autoScheduleClasses(batch, chipGroupDays);
+                        } else {
+                            manualScheduleClasses(batch, calendarManual.getSelectedDates());
                         }
                         dialog.dismiss();
                     })
@@ -578,6 +570,38 @@ public class BatchesActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void manualScheduleClasses(BatchModel batch, List<CalendarDay> selectedDates) {
+        if (selectedDates == null || selectedDates.isEmpty()) return;
+
+        WriteBatch writeBatch = db.batch();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        String timeRange = timeFmt.format(batch.getStartTime().toDate()) + " - " + timeFmt.format(batch.getEndTime().toDate());
+
+        int count = 0;
+        for (CalendarDay day : selectedDates) {
+            count++;
+            String classId = db.collection("users").document(userId).collection("classes").document().getId();
+            ClassModel classModel = new ClassModel(
+                    classId,
+                    "Manual Class",
+                    batch.getName(),
+                    batch.getId(),
+                    timeRange,
+                    dateFormat.format(day.getDate()),
+                    String.valueOf(count),
+                    false,
+                    batch.getCycleCount(),
+                    batch.getTotalMonthlyClasses(),
+                    new Timestamp(Calendar.getInstance().getTime())
+            );
+            writeBatch.set(db.collection("users").document(userId).collection("classes").document(classId), classModel);
+        }
+        writeBatch.commit().addOnSuccessListener(aVoid -> {
+            Toast.makeText(BatchesActivity.this, selectedDates.size() + " classes scheduled manually", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void cleanupScheduledClasses(String batchId) {
@@ -602,8 +626,7 @@ public class BatchesActivity extends AppCompatActivity {
                 });
     }
 
-    private void autoScheduleClasses(BatchModel batch, String weeklyStr, ChipGroup chipGroup) {
-        if (weeklyStr.isEmpty()) return;
+    private void autoScheduleClasses(BatchModel batch, ChipGroup chipGroup) {
         List<Integer> selectedDays = new ArrayList<>();
         if (((Chip)chipGroup.findViewById(R.id.chipSun)).isChecked()) selectedDays.add(Calendar.SUNDAY);
         if (((Chip)chipGroup.findViewById(R.id.chipMon)).isChecked()) selectedDays.add(Calendar.MONDAY);

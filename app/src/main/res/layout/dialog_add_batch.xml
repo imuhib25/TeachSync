@@ -180,24 +180,6 @@
             android:orientation="vertical"
             android:visibility="visible">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilWeeklyClasses"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Weekly Classes"
-                android:textColorHint="#94A3B8"
-                app:hintTextColor="#3B82F6"
-                android:layout_marginBottom="12dp">
-
-                <AutoCompleteTextView
-                    android:id="@+id/etWeeklyClasses"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:textColor="@color/white" />
-            </com.google.android.material.textfield.TextInputLayout>
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -210,8 +192,8 @@
                 android:id="@+id/chipGroupDays"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:chipSpacingHorizontal="8dp">
+                android:layout_marginBottom="10dp"
+                app:chipSpacingHorizontal="2dp">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSat"
@@ -272,24 +254,39 @@
             </com.google.android.material.chip.ChipGroup>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/manualTxt"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/layoutManualSchedule"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add your classes manually from the schedule fragment!"
-            android:textColor="#ffff"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="16dp"
-            android:textSize="14sp"
-            android:fontFamily="@font/lexend"
-            android:visibility="gone"/>
+            android:orientation="vertical"
+            android:visibility="gone">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Dates for Classes"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+                android:id="@+id/calendarManual"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:mcv_showOtherDates="all"
+                android:background="#1E293B"
+                app:mcv_headerTextAppearance="@style/CalendarWhiteText"
+                app:mcv_weekDayTextAppearance="@style/CalendarWhiteTextSmall"
+                app:mcv_dateTextAppearance="@style/CalendarWhiteText"
+                android:theme="@style/Theme.AppCompat.NoActionBar"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save" />
+            android:text="Save"
+            android:layout_marginTop="16dp"/>
 
     </LinearLayout>
 
