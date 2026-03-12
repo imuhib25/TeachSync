@@ -273,11 +273,15 @@
                 android:id="@+id/calendarManual"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:mcv_showOtherDates="all"
-                android:background="#1E293B"
+                app:mcv_showOtherDates="none"
+                android:background="@drawable/bg_calendar"
+                android:padding="8dp"
                 app:mcv_headerTextAppearance="@style/CalendarWhiteText"
                 app:mcv_weekDayTextAppearance="@style/CalendarWhiteTextSmall"
                 app:mcv_dateTextAppearance="@style/CalendarWhiteText"
+                app:mcv_selectionColor="#3B82F6"
+                app:mcv_arrowColor="@color/white"
+                app:mcv_calendarMode="month"
                 android:theme="@style/Theme.AppCompat.NoActionBar"/>
         </LinearLayout>
 

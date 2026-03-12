@@ -124,6 +124,29 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         notifyDataSetChanged();
     }
 
+    public BatchModel getItem(int position) {
+        if (position >= 0 && position < displayList.size()) {
+            return displayList.get(position);
+        }
+        return null;
+    }
+
+    public void removeItem(int position) {
+        if (position >= 0 && position < displayList.size()) {
+            BatchModel removed = displayList.remove(position);
+            fullList.remove(removed);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public void restoreItem(BatchModel item, int position) {
+        if (position >= 0 && position <= displayList.size()) {
+            displayList.add(position, item);
+            fullList.add(item);
+            notifyItemInserted(position);
+        }
+    }
+
     public void filter(String query) {
         displayList.clear();
         if (query == null || query.trim().isEmpty()) {

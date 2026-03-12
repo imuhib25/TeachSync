@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
@@ -18,6 +20,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 
 public class ManageFragment extends Fragment {
@@ -28,6 +31,7 @@ public class ManageFragment extends Fragment {
     ImageView profilePic;
     FirebaseAuth mAuth;
     FirebaseFirestore firestore;
+    private ListenerRegistration userListener;
 
 
     @Override
@@ -47,42 +51,33 @@ public class ManageFragment extends Fragment {
         if (mAuth.getCurrentUser() != null) {
             String userId = mAuth.getCurrentUser().getUid();
             DocumentReference documentReference = firestore.collection("users").document(userId);
-            documentReference.addSnapshotListener((documentSnapshot, e) -> {
+            userListener = documentReference.addSnapshotListener((documentSnapshot, e) -> {
                 if (e != null) return;
-                if (documentSnapshot != null && documentSnapshot.exists()) {
+                if (documentSnapshot != null && documentSnapshot.exists() && isAdded()) {
                     String avatarUrl = documentSnapshot.getString("avatarUrl");
-                    if (avatarUrl != null && !avatarUrl.isEmpty() && isAdded()) {
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
                         Glide.with(this).load(avatarUrl).circleCrop().into(profilePic);
                     }
                 }
             });
         }
 
-        btnAddStudents.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(getActivity(), StudentsActivity.class));
+        btnAddStudents.setOnClickListener(v -> startActivity(new Intent(getActivity(), StudentsActivity.class)));
 
-            }
-        });
+        btnAddSubjects.setOnClickListener(v -> startActivity(new Intent(getActivity(), SubjectsActivity.class)));
+        
+        btnAddBatches.setOnClickListener(v -> startActivity(new Intent(getActivity(), BatchesActivity.class)));
 
-        btnAddSubjects.setOnClickListener(new View.OnClickListener() {
-                                              @Override
-                                              public void onClick(View v) {
-                                                  startActivity(new Intent(getActivity(), SubjectsActivity.class));
-
-                                              }
-                                          });
-        btnAddBatches.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(getActivity(), BatchesActivity.class));
-
-            }
-        });
-
-                // Inflate the layout for this fragment
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (userListener != null) {
+            userListener.remove();
+            userListener = null;
+        }
     }
 
     private void showDialog(Context context, int layoutResId){
@@ -90,6 +85,5 @@ public class ManageFragment extends Fragment {
         dialog.setContentView(layoutResId);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         dialog.show();
-
     }
 }

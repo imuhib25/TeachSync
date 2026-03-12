@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.SearchView;
@@ -16,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,6 +45,7 @@ public class SubjectsActivity extends AppCompatActivity {
 
     private ImageButton backButton;
     private ChipGroup chipGroupCommon;
+    private LinearLayout layoutEmpty;
 
     private final String[] commonSubjects = {
             "Mathematics", "Physics", "Chemistry", "Biology", "English",
@@ -72,6 +74,7 @@ public class SubjectsActivity extends AppCompatActivity {
         searchView = findViewById(R.id.searchSub);
         backButton = findViewById(R.id.back_button);
         chipGroupCommon = findViewById(R.id.chipGroupCommon);
+        layoutEmpty = findViewById(R.id.layoutEmpty);
 
         backButton.setOnClickListener(v -> onBackPressed());
 
@@ -85,8 +88,29 @@ public class SubjectsActivity extends AppCompatActivity {
 
         setupCommonSubjects();
         loadSubjects();
-        enableSwipe();
         setupSearch();
+
+        SubjectAdapter.attachSwipeToDelete(recyclerView, position -> {
+            if (position == RecyclerView.NO_POSITION) return;
+            SubjectModel deleted = adapter.getItem(position);
+            if (deleted == null) return;
+
+            adapter.removeItem(position);
+            subjectList.remove(deleted);
+            updateNoDataVisibility();
+
+            db.collection("users").document(userId).collection("subjects").document(deleted.getId()).delete();
+
+            Snackbar.make(recyclerView, "Subject deleted", Snackbar.LENGTH_LONG)
+                    .setAction("UNDO", v -> {
+                        adapter.restoreItem(deleted, position);
+                        subjectList.add(deleted);
+                        updateNoDataVisibility();
+                        db.collection("users").document(userId).collection("subjects")
+                                .document(deleted.getId())
+                                .set(deleted);
+                    }).show();
+        });
 
         fab.setOnClickListener(v -> showSubjectDialog(null));
     }
@@ -103,7 +127,6 @@ public class SubjectsActivity extends AppCompatActivity {
     }
 
     private void addCommonSubject(String name) {
-        // Check if already exists
         for (SubjectModel s : subjectList) {
             if (s.getName() != null && s.getName().equalsIgnoreCase(name)) {
                 Toast.makeText(this, name + " already added", Toast.LENGTH_SHORT).show();
@@ -135,7 +158,18 @@ public class SubjectsActivity extends AppCompatActivity {
                         }
                     }
                     adapter.setSubjects(subjectList);
+                    updateNoDataVisibility();
                 });
+    }
+
+    private void updateNoDataVisibility() {
+        if (subjectList.isEmpty()) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void showSubjectDialog(SubjectModel subjectToEdit) {
@@ -177,32 +211,6 @@ public class SubjectsActivity extends AppCompatActivity {
         });
 
         dialog.show();
-    }
-
-    private void enableSwipe() {
-        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView,
-                                  @NonNull RecyclerView.ViewHolder viewHolder,
-                                  @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                SubjectModel deleted = adapter.getItem(position);
-
-                db.collection("users").document(userId).collection("subjects").document(deleted.getId()).delete();
-
-                Snackbar.make(recyclerView, "Subject deleted", Snackbar.LENGTH_LONG)
-                        .setAction("UNDO", v ->
-                                db.collection("users").document(userId).collection("subjects")
-                                        .document(deleted.getId())
-                                        .set(deleted))
-                        .show();
-            }
-        }).attachToRecyclerView(recyclerView);
     }
 
     private void setupSearch() {

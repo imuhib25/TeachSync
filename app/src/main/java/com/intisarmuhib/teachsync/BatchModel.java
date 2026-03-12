@@ -18,10 +18,11 @@ public class BatchModel {
     private Timestamp createdAt;
     private int enrolledCount;         // Number of students in this batch
     
-    // Auto-scheduling preferences
+    // Scheduling preferences
     private boolean autoSchedule;
     private int weeklyCount;
-    private List<Integer> selectedDays;
+    private List<Integer> selectedDays; // For auto-schedule (1=Sun, 2=Mon...)
+    private List<Timestamp> manualDates; // For manual-schedule
 
     public BatchModel() {} // Required for Firestore
 
@@ -59,6 +60,7 @@ public class BatchModel {
     public boolean isAutoSchedule() { return autoSchedule; }
     public int getWeeklyCount() { return weeklyCount; }
     public List<Integer> getSelectedDays() { return selectedDays; }
+    public List<Timestamp> getManualDates() { return manualDates; }
 
     // Derived helpers (not stored in Firestore)
     public int getRemainingInCycle() {
@@ -82,4 +84,5 @@ public class BatchModel {
     public void setAutoSchedule(boolean autoSchedule) { this.autoSchedule = autoSchedule; }
     public void setWeeklyCount(int weeklyCount) { this.weeklyCount = weeklyCount; }
     public void setSelectedDays(List<Integer> selectedDays) { this.selectedDays = selectedDays; }
+    public void setManualDates(List<Timestamp> manualDates) { this.manualDates = manualDates; }
 }

@@ -2,6 +2,10 @@ package com.intisarmuhib.teachsync;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -29,6 +35,7 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHolder> {
@@ -38,6 +45,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
     private List<StudentModel> fullList;
     private final FirebaseFirestore db;
     private final String currentUserId;
+    private String currentQuery = "";
 
     public StudentAdapter(Activity activity, List<StudentModel> studentList) {
         this.activity = activity;
@@ -98,13 +106,17 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
     }
 
     public void filter(String text) {
+        currentQuery = text != null ? text.toLowerCase(Locale.getDefault()).trim() : "";
+        applyFilter();
+    }
+
+    private void applyFilter() {
         studentList.clear();
-        if (text == null || text.isEmpty()) {
+        if (currentQuery.isEmpty()) {
             studentList.addAll(fullList);
         } else {
-            String query = text.toLowerCase().trim();
             for (StudentModel item : fullList) {
-                if (item.getName() != null && item.getName().toLowerCase().contains(query)) {
+                if (item.getName() != null && item.getName().toLowerCase(Locale.getDefault()).contains(currentQuery)) {
                     studentList.add(item);
                 }
             }
@@ -114,11 +126,66 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
     public void updateList(List<StudentModel> newList) {
         this.fullList = new ArrayList<>(newList);
-        if (this.studentList != newList) {
-            this.studentList.clear();
-            this.studentList.addAll(newList);
+        applyFilter();
+    }
+
+    public StudentModel getItem(int position) {
+        if (position >= 0 && position < studentList.size()) {
+            return studentList.get(position);
         }
-        notifyDataSetChanged();
+        return null;
+    }
+
+    public void removeItem(int position) {
+        if (position >= 0 && position < studentList.size()) {
+            StudentModel removed = studentList.remove(position);
+            fullList.remove(removed);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public void restoreItem(StudentModel item, int position) {
+        if (position >= 0 && position <= studentList.size()) {
+            studentList.add(position, item);
+            fullList.add(item);
+            notifyItemInserted(position);
+        }
+    }
+
+    public static void attachSwipeToDelete(RecyclerView recyclerView, OnSwipeListener swipeListener) {
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh, @NonNull RecyclerView.ViewHolder t) { return false; }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                swipeListener.onSwiped(viewHolder.getAdapterPosition());
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder viewHolder,
+                                     float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                View itemView = viewHolder.itemView;
+                ColorDrawable bg = new ColorDrawable(Color.parseColor("#C62828"));
+                bg.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                bg.draw(c);
+
+                Drawable icon = ContextCompat.getDrawable(rv.getContext(), R.drawable.ic_delete);
+                if (icon != null) {
+                    icon.setTint(Color.WHITE);
+                    int margin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
+                    int top = itemView.getTop() + margin;
+                    int left = itemView.getRight() - margin - icon.getIntrinsicWidth();
+                    icon.setBounds(left, top, left + icon.getIntrinsicWidth(), top + icon.getIntrinsicHeight());
+                    icon.draw(c);
+                }
+                super.onChildDraw(c, rv, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        }).attachToRecyclerView(recyclerView);
+    }
+
+    public interface OnSwipeListener {
+        void onSwiped(int position);
     }
 
     private void showEditDialog(StudentModel student) {

@@ -86,6 +86,8 @@ public class BatchesActivity extends AppCompatActivity {
             "ICT", "Higher Math", "Accounting", "Finance", "Economics"
     };
 
+    private LinearLayout layoutEmpty;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,6 +96,7 @@ public class BatchesActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerViewBatch);
         fabAdd       = findViewById(R.id.fabAddBatch);
         backButton   = findViewById(R.id.back_button);
+        layoutEmpty  = findViewById(R.id.layoutEmpty);
 
         db = FirebaseFirestore.getInstance();
 
@@ -125,17 +128,22 @@ public class BatchesActivity extends AppCompatActivity {
         backButton.setOnClickListener(v -> onBackPressed());
 
         BatchAdapter.attachSwipeToDelete(recyclerView, position -> {
-            if (position < 0 || position >= batchList.size()) return;
-            BatchModel deleted = batchList.get(position);
-            batchList.remove(position);
-            adapter.notifyItemRemoved(position);
+            if (position == RecyclerView.NO_POSITION) return;
+            
+            BatchModel deleted = adapter.getItem(position);
+            if (deleted == null) return;
+
+            adapter.removeItem(position);
+            batchList.remove(deleted);
+            updateNoDataVisibility();
 
             deleteBatchAndData(deleted);
 
             Snackbar.make(recyclerView, "Batch deleted", Snackbar.LENGTH_LONG)
                     .setAction("UNDO", v -> {
-                        batchList.add(position, deleted);
-                        adapter.notifyItemInserted(position);
+                        adapter.restoreItem(deleted, position);
+                        batchList.add(deleted);
+                        updateNoDataVisibility();
                         db.collection("users").document(userId)
                                 .collection("batches")
                                 .document(deleted.getId()).set(deleted);
@@ -147,6 +155,16 @@ public class BatchesActivity extends AppCompatActivity {
 
         fabAdd.setOnClickListener(v -> showBatchDialog(null));
         setupSearch();
+    }
+
+    private void updateNoDataVisibility() {
+        if (batchList.isEmpty()) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void showBatchInfoDialog(BatchModel batch) {
@@ -377,6 +395,7 @@ public class BatchesActivity extends AppCompatActivity {
                         }
                     }
                     adapter.setBatches(batchList);
+                    updateNoDataVisibility();
                 });
     }
 
@@ -405,6 +424,19 @@ public class BatchesActivity extends AppCompatActivity {
         LinearLayout layoutManualSchedule = view.findViewById(R.id.layoutManualSchedule);
         MaterialCalendarView calendarManual = view.findViewById(R.id.calendarManual);
         calendarManual.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
+        
+        // Setup cool calendar: restrict to current month and hide others
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        Calendar startOfMonth = (Calendar) cal.clone();
+        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+        Calendar endOfMonth = (Calendar) cal.clone();
+        
+        calendarManual.state().edit()
+                .setMinimumDate(startOfMonth)
+                .setMaximumDate(endOfMonth)
+                .commit();
+
         ChipGroup chipGroupDays = view.findViewById(R.id.chipGroupDays);
 
         etSubject.setAdapter(new ArrayAdapter<>(this,
@@ -468,6 +500,13 @@ public class BatchesActivity extends AppCompatActivity {
                 radioManual.setChecked(true);
                 layoutAutoSchedule.setVisibility(View.GONE);
                 layoutManualSchedule.setVisibility(View.VISIBLE);
+                if (editBatch.getManualDates() != null) {
+                    List<CalendarDay> calendarDays = new ArrayList<>();
+                    for (Timestamp ts : editBatch.getManualDates()) {
+                        calendarDays.add(CalendarDay.from(ts.toDate()));
+                    }
+                    for (CalendarDay cd : calendarDays) calendarManual.setDateSelected(cd, true);
+                }
             }
         }
 
@@ -492,7 +531,6 @@ public class BatchesActivity extends AppCompatActivity {
 
             int startTotal = startHour * 60 + startMinute;
             int endTotal   = endHour   * 60 + endMinute;
-
             boolean isOvernight = false;
             if (endTotal <= startTotal) {
                 endTotal += 24 * 60;
@@ -502,6 +540,98 @@ public class BatchesActivity extends AppCompatActivity {
             long duration = endTotal - startTotal;
             int totalMonthlyClasses = Integer.parseInt(monthlyStr);
             double paymentPerStudent = Double.parseDouble(paymentStr);
+
+            boolean isAuto = radioAuto.isChecked();
+            List<Integer> selectedDays = new ArrayList<>();
+            List<CalendarDay> selectedDates = calendarManual.getSelectedDates();
+
+            if (isAuto) {
+                if (((Chip)view.findViewById(R.id.chipSun)).isChecked()) selectedDays.add(Calendar.SUNDAY);
+                if (((Chip)view.findViewById(R.id.chipMon)).isChecked()) selectedDays.add(Calendar.MONDAY);
+                if (((Chip)view.findViewById(R.id.chipTue)).isChecked()) selectedDays.add(Calendar.TUESDAY);
+                if (((Chip)view.findViewById(R.id.chipWed)).isChecked()) selectedDays.add(Calendar.WEDNESDAY);
+                if (((Chip)view.findViewById(R.id.chipThu)).isChecked()) selectedDays.add(Calendar.THURSDAY);
+                if (((Chip)view.findViewById(R.id.chipFri)).isChecked()) selectedDays.add(Calendar.FRIDAY);
+                if (((Chip)view.findViewById(R.id.chipSat)).isChecked()) selectedDays.add(Calendar.SATURDAY);
+                if (selectedDays.isEmpty()) {
+                    Toast.makeText(this, "Please select at least one day", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                if (selectedDates == null || selectedDates.isEmpty()) {
+                    Toast.makeText(this, "Please select at least one date", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            // --- CONFLICT CHECK START ---
+            for (BatchModel other : batchList) {
+                if (isEdit && other.getId().equals(editBatch.getId())) continue;
+
+                Calendar oSc = Calendar.getInstance(); oSc.setTime(other.getStartTime().toDate());
+                int oStart = oSc.get(Calendar.HOUR_OF_DAY) * 60 + oSc.get(Calendar.MINUTE);
+                int oEnd = oStart + (int)other.getDurationMinutes();
+
+                // Check for time overlap
+                if (startTotal < oEnd && endTotal > oStart) {
+                    boolean dayConflict = false;
+                    String conflictInfo = "";
+
+                    if (isAuto && other.isAutoSchedule()) {
+                        for (Integer day : selectedDays) {
+                            if (other.getSelectedDays() != null && other.getSelectedDays().contains(day)) {
+                                dayConflict = true;
+                                conflictInfo = getDayName(day) + "s";
+                                break;
+                            }
+                        }
+                    } else if (!isAuto && !other.isAutoSchedule()) {
+                        if (other.getManualDates() != null) {
+                            SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+                            Set<String> otherDatesStr = new HashSet<>();
+                            for (Timestamp ts : other.getManualDates()) otherDatesStr.add(df.format(ts.toDate()));
+                            for (CalendarDay day : selectedDates) {
+                                String dStr = df.format(day.getDate());
+                                if (otherDatesStr.contains(dStr)) {
+                                    dayConflict = true;
+                                    conflictInfo = dStr;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        // Mixed check
+                        SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+                        if (isAuto) { // New is auto, Other is manual
+                            if (other.getManualDates() != null) {
+                                for (Timestamp ts : other.getManualDates()) {
+                                    Calendar c = Calendar.getInstance(); c.setTime(ts.toDate());
+                                    if (selectedDays.contains(c.get(Calendar.DAY_OF_WEEK))) {
+                                        dayConflict = true;
+                                        conflictInfo = df.format(ts.toDate());
+                                        break;
+                                    }
+                                }
+                            }
+                        } else { // New is manual, Other is auto
+                            for (CalendarDay day : selectedDates) {
+                                Calendar c = Calendar.getInstance(); c.setTime(day.getDate());
+                                if (other.getSelectedDays() != null && other.getSelectedDays().contains(c.get(Calendar.DAY_OF_WEEK))) {
+                                    dayConflict = true;
+                                    conflictInfo = df.format(day.getDate());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (dayConflict) {
+                        Toast.makeText(this, "Conflict: " + other.getName() + " already has a class on " + conflictInfo + " at an overlapping time.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                }
+            }
+            // --- CONFLICT CHECK END ---
 
             Calendar startCal = Calendar.getInstance();
             startCal.set(Calendar.HOUR_OF_DAY, startHour);
@@ -514,9 +644,7 @@ public class BatchesActivity extends AppCompatActivity {
             endCal.set(Calendar.MINUTE, endMinute);
             endCal.set(Calendar.SECOND, 0);
             endCal.set(Calendar.MILLISECOND, 0);
-            if (isOvernight) {
-                endCal.add(Calendar.DAY_OF_MONTH, 1);
-            }
+            if (isOvernight) endCal.add(Calendar.DAY_OF_MONTH, 1);
 
             String id = isEdit ? editBatch.getId()
                     : db.collection("users").document(userId)
@@ -534,19 +662,16 @@ public class BatchesActivity extends AppCompatActivity {
                            : new Timestamp(Calendar.getInstance().getTime())
             );
             
-            boolean isAuto = radioAuto.isChecked();
             batch.setAutoSchedule(isAuto);
             if (isAuto) {
-                List<Integer> selectedDays = new ArrayList<>();
-                if (((Chip)view.findViewById(R.id.chipSun)).isChecked()) selectedDays.add(Calendar.SUNDAY);
-                if (((Chip)view.findViewById(R.id.chipMon)).isChecked()) selectedDays.add(Calendar.MONDAY);
-                if (((Chip)view.findViewById(R.id.chipTue)).isChecked()) selectedDays.add(Calendar.TUESDAY);
-                if (((Chip)view.findViewById(R.id.chipWed)).isChecked()) selectedDays.add(Calendar.WEDNESDAY);
-                if (((Chip)view.findViewById(R.id.chipThu)).isChecked()) selectedDays.add(Calendar.THURSDAY);
-                if (((Chip)view.findViewById(R.id.chipFri)).isChecked()) selectedDays.add(Calendar.FRIDAY);
-                if (((Chip)view.findViewById(R.id.chipSat)).isChecked()) selectedDays.add(Calendar.SATURDAY);
                 batch.setSelectedDays(selectedDays);
                 batch.setWeeklyCount(selectedDays.size());
+                batch.setManualDates(null);
+            } else {
+                List<Timestamp> tsList = new ArrayList<>();
+                for (CalendarDay d : selectedDates) tsList.add(new Timestamp(d.getDate()));
+                batch.setManualDates(tsList);
+                batch.setSelectedDays(null);
             }
 
             checkAndAddSubject(subject);
@@ -558,7 +683,7 @@ public class BatchesActivity extends AppCompatActivity {
                         if (isAuto) {
                             autoScheduleClasses(batch, chipGroupDays);
                         } else {
-                            manualScheduleClasses(batch, calendarManual.getSelectedDates());
+                            manualScheduleClasses(batch, selectedDates);
                         }
                         dialog.dismiss();
                     })
@@ -570,6 +695,19 @@ public class BatchesActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private String getDayName(int day) {
+        switch (day) {
+            case Calendar.SUNDAY: return "Sunday";
+            case Calendar.MONDAY: return "Monday";
+            case Calendar.TUESDAY: return "Tuesday";
+            case Calendar.WEDNESDAY: return "Wednesday";
+            case Calendar.THURSDAY: return "Thursday";
+            case Calendar.FRIDAY: return "Friday";
+            case Calendar.SATURDAY: return "Saturday";
+            default: return "";
+        }
     }
 
     private void manualScheduleClasses(BatchModel batch, List<CalendarDay> selectedDates) {

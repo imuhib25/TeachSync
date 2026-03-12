@@ -1,7 +1,5 @@
 package com.intisarmuhib.teachsync;
 
-import android.app.Dialog;
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -102,8 +100,59 @@ public class StudentsActivity extends AppCompatActivity {
 
         loadStudents();
         loadBatches();
-        enableSwipeToDelete();
         setupSearch();
+
+        StudentAdapter.attachSwipeToDelete(recyclerView, position -> {
+            if (position == RecyclerView.NO_POSITION) return;
+            
+            StudentModel deletedStudent = adapter.getItem(position);
+            if (deletedStudent == null) return;
+
+            // Remove locally first for instant UI feedback
+            adapter.removeItem(position);
+            studentList.remove(deletedStudent);
+            updateEmptyState();
+
+            // Perform the deletion in Firestore
+            WriteBatch deleteBatch = db.batch();
+            deleteBatch.delete(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()));
+
+            for (String bName : deletedStudent.getBatches()) {
+                String bId = batchIdMap.get(bName);
+                if (bId != null) {
+                    deleteBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                            "enrolledCount", FieldValue.increment(-1));
+                }
+            }
+
+            deleteBatch.commit().addOnSuccessListener(aVoid -> {
+                Snackbar.make(recyclerView, "Student deleted", Snackbar.LENGTH_LONG)
+                        .setAction("UNDO", v -> {
+                            // Restore locally
+                            adapter.restoreItem(deletedStudent, position);
+                            studentList.add(deletedStudent);
+                            updateEmptyState();
+
+                            // Restore in Firestore
+                            WriteBatch restoreBatch = db.batch();
+                            restoreBatch.set(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()), deletedStudent);
+                            
+                            for (String bName : deletedStudent.getBatches()) {
+                                String bId = batchIdMap.get(bName);
+                                if (bId != null) {
+                                    restoreBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                                            "enrolledCount", FieldValue.increment(1));
+                                }
+                            }
+                            restoreBatch.commit();
+                        }).show();
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                adapter.restoreItem(deletedStudent, position);
+                studentList.add(deletedStudent);
+                updateEmptyState();
+            });
+        });
 
         fab.setOnClickListener(v -> showAddStudentBottomSheet());
     }
@@ -246,76 +295,11 @@ public class StudentsActivity extends AppCompatActivity {
         }
     }
 
-    private void enableSwipeToDelete() {
-        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh, @NonNull RecyclerView.ViewHolder target) { return false; }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                if (position < 0 || position >= studentList.size()) return;
-                
-                StudentModel deletedStudent = studentList.get(position);
-
-                // Perform the deletion
-                db.runTransaction(transaction -> {
-                    transaction.delete(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()));
-
-                    for (String bName : deletedStudent.getBatches()) {
-                        String bId = batchIdMap.get(bName);
-                        if (bId != null) {
-                            transaction.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                                    "enrolledCount", FieldValue.increment(-1));
-                        }
-                    }
-                    return null;
-                }).addOnSuccessListener(aVoid -> {
-                    Snackbar.make(recyclerView, "Student deleted", Snackbar.LENGTH_LONG)
-                            .setAction("UNDO", v -> {
-                                db.runTransaction(undoTransaction -> {
-                                    undoTransaction.set(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()), deletedStudent);
-                                    
-                                    for (String bName : deletedStudent.getBatches()) {
-                                        String bId = batchIdMap.get(bName);
-                                        if (bId != null) {
-                                            undoTransaction.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                                                    "enrolledCount", FieldValue.increment(1));
-                                        }
-                                    }
-                                    return null;
-                                });
-                            }).show();
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(StudentsActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    adapter.notifyItemChanged(position);
-                });
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                View itemView = vh.itemView;
-                Paint paint = new Paint();
-                paint.setColor(Color.RED);
-                c.drawRect(itemView.getRight() + dX, itemView.getTop(), itemView.getRight(), itemView.getBottom(), paint);
-                Drawable icon = ContextCompat.getDrawable(StudentsActivity.this, R.drawable.ic_delete);
-                if (icon != null) {
-                    int margin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
-                    icon.setBounds(itemView.getRight() - margin - icon.getIntrinsicWidth(), itemView.getTop() + margin, itemView.getRight() - margin, itemView.getTop() + margin + icon.getIntrinsicHeight());
-                    icon.draw(c);
-                }
-                super.onChildDraw(c, rv, vh, dX, dY, actionState, isCurrentlyActive);
-            }
-        };
-        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerView);
-    }
-
     private void setupSearch() {
         edtSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { 
                 adapter.filter(s.toString()); 
-                // We don't call updateEmptyState here because studentList hasn't changed, only the filtered view in adapter.
             }
             @Override public void afterTextChanged(Editable s) {}
         });
