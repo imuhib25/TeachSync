@@ -51,7 +51,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/searchBatch"
-        android:layout_marginBottom="80dp"
+        android:layout_above="@id/layoutAdBatches"
         android:padding="12dp"/>
 
     <!-- Empty State -->
@@ -77,14 +77,23 @@
             android:layout_marginTop="16dp"/>
     </LinearLayout>
 
+    <include
+        android:id="@+id/layoutAdBatches"
+        layout="@layout/layout_ad_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="12dp" />
+
     <!-- Floating Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddBatch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@id/layoutAdBatches"
         android:layout_alignParentEnd="true"
-        android:layout_margin="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="12dp"
         android:contentDescription="TODO"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="#3B82F6"/>

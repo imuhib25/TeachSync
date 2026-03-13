@@ -146,6 +146,7 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void generateDateChips() {
+        if (!isAdded() || getContext() == null) return;
         dateContainer.removeAllViews();
         
         Calendar tempCal = (Calendar) currentCalendar.clone();
@@ -375,9 +376,9 @@ public class ScheduleFragment extends Fragment {
         batchRef.get().addOnSuccessListener(batchSnap -> {
             if (!isAdded() || !batchSnap.exists()) return;
 
-            int total = batchSnap.getLong("totalMonthlyClasses").intValue();
-            int taken = batchSnap.getLong("currentMonthCount").intValue();
-            int cycleCount = batchSnap.getLong("cycleCount").intValue();
+            int total = batchSnap.getLong("totalMonthlyClasses") != null ? batchSnap.getLong("totalMonthlyClasses").intValue() : 0;
+            int taken = batchSnap.getLong("currentMonthCount") != null ? batchSnap.getLong("currentMonthCount").intValue() : 0;
+            int cycleCount = batchSnap.getLong("cycleCount") != null ? batchSnap.getLong("cycleCount").intValue() : 1;
 
             if (!isEdit && !isExtra && taken >= total) {
                 Snackbar.make(recyclerView, "Cycle complete!", Snackbar.LENGTH_LONG).setAction("RESET", v -> resetCycle(batchId, batchRef)).show();
@@ -431,7 +432,7 @@ public class ScheduleFragment extends Fragment {
         data.put("date", date);
         data.put("extra", isExtra);
         data.put("classTime", finalTimeText);
-        data.put("createdAt", Timestamp.now());
+        data.put("createdAt", isEdit && existingModel != null ? existingModel.getCreatedAt() : Timestamp.now());
         data.put("monthlyNumber", classNumber);
         data.put("cycleNumber",   cycleCount);
         data.put("totalInCycle",  total);
@@ -456,7 +457,7 @@ public class ScheduleFragment extends Fragment {
                         chip.setSelected(true);
                         try {
                             Date d = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(date);
-                            updateClassHeader(d);
+                            if (d != null) updateClassHeader(d);
                         } catch (Exception ignored) {}
                         break;
                     }
@@ -579,7 +580,8 @@ public class ScheduleFragment extends Fragment {
         DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batchId);
         batchRef.get().addOnSuccessListener(snap -> {
             if (snap.exists()) {
-                int newVal = Math.max(0, snap.getLong("currentMonthCount").intValue() - 1);
+                Long currentCount = snap.getLong("currentMonthCount");
+                int newVal = Math.max(0, (currentCount != null ? currentCount.intValue() : 0) - 1);
                 batchRef.update("currentMonthCount", newVal);
             }
         });

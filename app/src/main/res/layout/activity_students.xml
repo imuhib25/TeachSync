@@ -8,99 +8,119 @@
     android:background="#0B1020"
     tools:context=".StudentsActivity">
 
-    <!-- Header -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:orientation="vertical">
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/TopLayout"
-        android:orientation="horizontal">
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/baseline_arrow_back_ios_24"
-            android:layout_marginTop="8dp"
-            android:background="#0B1020"
-            app:tint="@color/white" />
-        <TextView
-            android:text="Students"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:fontFamily="@font/lexend_bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
-        <TextView
-            android:text="Manage enrolled students"
-            android:textSize="14sp"
-            android:textColor="#A0A8C0"
-            android:fontFamily="@font/lexend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/searchLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="90dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="#1A2238"
-        app:boxCornerRadiusTopStart="18dp"
-        app:boxCornerRadiusTopEnd="18dp"
-        app:boxCornerRadiusBottomStart="18dp"
-        app:boxCornerRadiusBottomEnd="18dp"
-        app:hintTextColor="#9AA0C3">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edtSearch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Search students..."
-            android:textColor="@android:color/white"
-            android:textColorHint="#9AA0C3"/>
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Empty State -->
-    <LinearLayout
-        android:id="@+id/layoutEmpty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_student_empty"
-            app:tint="#303A55"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="No students found"
-            android:textColor="#A0A8C0"
-            android:textSize="18sp"
-            android:layout_marginTop="16dp"
-            android:fontFamily="@font/lexend"/>
-    </LinearLayout>
-
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerStudents"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="160dp"
-        android:padding="16dp"/>
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/TopLayout"
+                android:orientation="horizontal">
+                <ImageButton
+                    android:id="@+id/back_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_arrow_back_ios_24"
+                    android:layout_marginTop="8dp"
+                    android:background="#0B1020"
+                    app:tint="@color/white" />
+                <TextView
+                    android:text="Students"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:fontFamily="@font/lexend_bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <TextView
+                android:text="Manage enrolled students"
+                android:textSize="14sp"
+                android:textColor="#A0A8C0"
+                android:fontFamily="@font/lexend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#1A2238"
+            app:boxCornerRadiusTopStart="18dp"
+            app:boxCornerRadiusTopEnd="18dp"
+            app:boxCornerRadiusBottomStart="18dp"
+            app:boxCornerRadiusBottomEnd="18dp"
+            app:hintTextColor="#9AA0C3">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Search students..."
+                android:textColor="@android:color/white"
+                android:textColorHint="#9AA0C3"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- Empty State -->
+            <LinearLayout
+                android:id="@+id/layoutEmpty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/ic_student_empty"
+                    app:tint="#303A55"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No students found"
+                    android:textColor="#A0A8C0"
+                    android:textSize="18sp"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/lexend"/>
+            </LinearLayout>
+
+            <!-- RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerStudents"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp"
+                android:clipToPadding="false"/>
+        </FrameLayout>
+
+        <include
+            android:id="@+id/layoutAdStudents"
+            layout="@layout/layout_ad_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
 
     <!-- Floating Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -113,5 +133,6 @@
         app:backgroundTint="#6C8CFF"
         app:tint="@android:color/white"
         app:layout_anchorGravity="bottom|end"
-        android:layout_gravity="bottom|end"/>
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="80dp"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -65,6 +66,7 @@ public class FinancesFragment extends Fragment {
     private ProgressBar progressFinance;
     private RecyclerView rvBatchFinance, rvTransactions;
     private FloatingActionButton fabAddFinance;
+    private ImageButton btnPrevMonth, btnNextMonth;
 
     private FirebaseFirestore db;
     private String userId;
@@ -81,11 +83,13 @@ public class FinancesFragment extends Fragment {
 
     private double totalCollectedThisMonth = 0;
     private double totalExpectedThisMonth = 0;
+    private Calendar currentCalendar;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_finances, container, false);
 
+        currentCalendar = Calendar.getInstance();
         initViews(view);
         db = FirebaseFirestore.getInstance();
         userId = FirebaseAuth.getInstance().getUid();
@@ -118,6 +122,18 @@ public class FinancesFragment extends Fragment {
 
         fabAddFinance.setOnClickListener(v -> showAddTransactionDialog());
 
+        btnPrevMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, -1);
+            updateLabels();
+            loadFinanceData();
+        });
+
+        btnNextMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, 1);
+            updateLabels();
+            loadFinanceData();
+        });
+
         return view;
     }
 
@@ -131,6 +147,8 @@ public class FinancesFragment extends Fragment {
         rvBatchFinance = view.findViewById(R.id.rvBatchFinance);
         rvTransactions = view.findViewById(R.id.rvTransactions);
         fabAddFinance = view.findViewById(R.id.fabAddFinance);
+        btnPrevMonth = view.findViewById(R.id.btnPrevMonth);
+        btnNextMonth = view.findViewById(R.id.btnNextMonth);
 
         rvBatchFinance.setLayoutManager(new LinearLayoutManager(getContext()));
         rvTransactions.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -144,15 +162,17 @@ public class FinancesFragment extends Fragment {
 
     private void updateLabels() {
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        tvMonthLabel.setText(sdf.format(Calendar.getInstance().getTime()));
+        tvMonthLabel.setText(sdf.format(currentCalendar.getTime()));
     }
 
     private void loadFinanceData() {
         if (userId == null) return;
 
-        Calendar now = Calendar.getInstance();
-        int currentMonth = now.get(Calendar.MONTH);
-        int currentYear = now.get(Calendar.YEAR);
+        if (transactionsListener != null) transactionsListener.remove();
+        if (invoicesListener != null) invoicesListener.remove();
+
+        int filterMonth = currentCalendar.get(Calendar.MONTH);
+        int filterYear = currentCalendar.get(Calendar.YEAR);
 
         transactionsListener = db.collection("users").document(userId).collection("transactions")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -164,12 +184,12 @@ public class FinancesFragment extends Fragment {
                         TransactionModel tx = doc.toObject(TransactionModel.class);
                         if (tx != null) {
                             tx.setId(doc.getId());
-                            transactionList.add(tx);
                             
                             if (tx.getTimestamp() != null) {
                                 Calendar cal = Calendar.getInstance();
                                 cal.setTime(tx.getTimestamp().toDate());
-                                if (cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear) {
+                                if (cal.get(Calendar.MONTH) == filterMonth && cal.get(Calendar.YEAR) == filterYear) {
+                                    transactionList.add(tx);
                                     totalCollectedThisMonth += tx.getAmount();
                                 }
                             }
@@ -194,36 +214,35 @@ public class FinancesFragment extends Fragment {
                     for (DocumentSnapshot doc : value.getDocuments()) {
                         InvoiceModel inv = doc.toObject(InvoiceModel.class);
                         if (inv != null) {
-                            // Filter invoices by current month to get accurate "Expected Monthly"
                             Calendar invMonth = Calendar.getInstance();
                             if (inv.getMonth() != null) {
                                 invMonth.setTime(inv.getMonth().toDate());
-                                if (invMonth.get(Calendar.MONTH) == currentMonth && invMonth.get(Calendar.YEAR) == currentYear) {
+                                if (invMonth.get(Calendar.MONTH) == filterMonth && invMonth.get(Calendar.YEAR) == filterYear) {
                                     totalExpectedThisMonth += inv.getAmount();
+                                    
+                                    if ("Due".equals(inv.getStatus())) totalDue += inv.getDueAmount();
+                                    else if ("Overdue".equals(inv.getStatus())) totalOverdue += inv.getDueAmount();
+
+                                    Set<String> students = batchStudentsMap.get(inv.getBatchId());
+                                    if (students == null) {
+                                        students = new HashSet<>();
+                                        batchStudentsMap.put(inv.getBatchId(), students);
+                                    }
+                                    students.add(inv.getStudentId());
+
+                                    BatchFinanceModel bfm = batchMap.get(inv.getBatchId());
+                                    if (bfm == null) {
+                                        bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(), 
+                                                inv.getPaidAmount(), inv.getDueAmount(), 1);
+                                    } else {
+                                        bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(),
+                                                bfm.getCollectedAmount() + inv.getPaidAmount(),
+                                                bfm.getDueAmount() + inv.getDueAmount(),
+                                                students.size());
+                                    }
+                                    batchMap.put(inv.getBatchId(), bfm);
                                 }
                             }
-
-                            if ("Due".equals(inv.getStatus())) totalDue += inv.getDueAmount();
-                            else if ("Overdue".equals(inv.getStatus())) totalOverdue += inv.getDueAmount();
-
-                            Set<String> students = batchStudentsMap.get(inv.getBatchId());
-                            if (students == null) {
-                                students = new HashSet<>();
-                                batchStudentsMap.put(inv.getBatchId(), students);
-                            }
-                            students.add(inv.getStudentId());
-
-                            BatchFinanceModel bfm = batchMap.get(inv.getBatchId());
-                            if (bfm == null) {
-                                bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(), 
-                                        inv.getPaidAmount(), inv.getDueAmount(), 1);
-                            } else {
-                                bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(),
-                                        bfm.getCollectedAmount() + inv.getPaidAmount(),
-                                        bfm.getDueAmount() + inv.getDueAmount(),
-                                        students.size());
-                            }
-                            batchMap.put(inv.getBatchId(), bfm);
                         }
                     }
 
