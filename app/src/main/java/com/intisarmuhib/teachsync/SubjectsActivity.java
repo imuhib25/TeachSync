@@ -21,6 +21,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -46,6 +48,7 @@ public class SubjectsActivity extends AppCompatActivity {
     private ImageButton backButton;
     private ChipGroup chipGroupCommon;
     private LinearLayout layoutEmpty;
+    private AdView mAdView;
 
     private final String[] commonSubjects = {
             "Mathematics", "Physics", "Chemistry", "Biology", "English",
@@ -67,6 +70,13 @@ public class SubjectsActivity extends AppCompatActivity {
         if (userId == null) {
             finish();
             return;
+        }
+
+        // Initialize and load Banner Ad
+        mAdView = findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
         }
 
         recyclerView = findViewById(R.id.recyclerViewSubs);
@@ -227,5 +237,29 @@ public class SubjectsActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 }

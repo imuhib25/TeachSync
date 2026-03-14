@@ -1,6 +1,7 @@
 package com.intisarmuhib.teachsync;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.Exclude;
 
 public class InvoiceModel {
     private String id;
@@ -53,6 +54,7 @@ public class InvoiceModel {
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
+    @Exclude
     public double getDueAmount() {
         return amount - paidAmount;
     }

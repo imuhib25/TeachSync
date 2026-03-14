@@ -1,6 +1,5 @@
 package com.intisarmuhib.teachsync;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,13 +25,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -67,14 +67,16 @@ public class FinancesFragment extends Fragment {
     private RecyclerView rvBatchFinance, rvTransactions;
     private FloatingActionButton fabAddFinance;
     private ImageButton btnPrevMonth, btnNextMonth;
+    private AdView mAdView;
 
     private FirebaseFirestore db;
     private String userId;
     private String currencySymbol = "৳";
+    private Calendar selectedCalendar = Calendar.getInstance();
 
     private final List<TransactionModel> transactionList = new ArrayList<>();
     private final List<BatchFinanceModel> batchFinanceList = new ArrayList<>();
-    
+
     private TransactionAdapter transactionAdapter;
     private BatchFinanceAdapter batchFinanceAdapter;
 
@@ -83,20 +85,24 @@ public class FinancesFragment extends Fragment {
 
     private double totalCollectedThisMonth = 0;
     private double totalExpectedThisMonth = 0;
-    private Calendar currentCalendar;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_finances, container, false);
 
-        currentCalendar = Calendar.getInstance();
         initViews(view);
         db = FirebaseFirestore.getInstance();
         userId = FirebaseAuth.getInstance().getUid();
 
         loadCurrency();
         updateLabels();
-        
+
+        // Load Ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        if (mAdView != null) {
+            mAdView.loadAd(adRequest);
+        }
+
         transactionAdapter = new TransactionAdapter(transactionList, currencySymbol, new TransactionAdapter.OnTransactionListener() {
             @Override
             public void onDelete(TransactionModel transaction, int position) {
@@ -114,7 +120,7 @@ public class FinancesFragment extends Fragment {
             }
         });
         rvTransactions.setAdapter(transactionAdapter);
-        
+
         batchFinanceAdapter = new BatchFinanceAdapter(batchFinanceList, currencySymbol);
         rvBatchFinance.setAdapter(batchFinanceAdapter);
 
@@ -123,18 +129,21 @@ public class FinancesFragment extends Fragment {
         fabAddFinance.setOnClickListener(v -> showAddTransactionDialog());
 
         btnPrevMonth.setOnClickListener(v -> {
-            currentCalendar.add(Calendar.MONTH, -1);
-            updateLabels();
-            loadFinanceData();
+            selectedCalendar.add(Calendar.MONTH, -1);
+            updateUIForMonthChange();
         });
 
         btnNextMonth.setOnClickListener(v -> {
-            currentCalendar.add(Calendar.MONTH, 1);
-            updateLabels();
-            loadFinanceData();
+            selectedCalendar.add(Calendar.MONTH, 1);
+            updateUIForMonthChange();
         });
 
         return view;
+    }
+
+    private void updateUIForMonthChange() {
+        updateLabels();
+        loadFinanceData();
     }
 
     private void initViews(View view) {
@@ -149,6 +158,7 @@ public class FinancesFragment extends Fragment {
         fabAddFinance = view.findViewById(R.id.fabAddFinance);
         btnPrevMonth = view.findViewById(R.id.btnPrevMonth);
         btnNextMonth = view.findViewById(R.id.btnNextMonth);
+        mAdView = view.findViewById(R.id.adView);
 
         rvBatchFinance.setLayoutManager(new LinearLayoutManager(getContext()));
         rvTransactions.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -162,7 +172,7 @@ public class FinancesFragment extends Fragment {
 
     private void updateLabels() {
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        tvMonthLabel.setText(sdf.format(currentCalendar.getTime()));
+        tvMonthLabel.setText(sdf.format(selectedCalendar.getTime()));
     }
 
     private void loadFinanceData() {
@@ -171,94 +181,151 @@ public class FinancesFragment extends Fragment {
         if (transactionsListener != null) transactionsListener.remove();
         if (invoicesListener != null) invoicesListener.remove();
 
-        int filterMonth = currentCalendar.get(Calendar.MONTH);
-        int filterYear = currentCalendar.get(Calendar.YEAR);
+        int currentMonth = selectedCalendar.get(Calendar.MONTH);
+        int currentYear = selectedCalendar.get(Calendar.YEAR);
 
-        transactionsListener = db.collection("users").document(userId).collection("transactions")
+        // TRANSACTIONS
+        transactionsListener = db.collection("users")
+                .document(userId)
+                .collection("transactions")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
+
                     if (error != null || value == null || !isAdded()) return;
+
                     transactionList.clear();
                     totalCollectedThisMonth = 0;
+
                     for (DocumentSnapshot doc : value.getDocuments()) {
+
                         TransactionModel tx = doc.toObject(TransactionModel.class);
-                        if (tx != null) {
-                            tx.setId(doc.getId());
-                            
-                            if (tx.getTimestamp() != null) {
-                                Calendar cal = Calendar.getInstance();
-                                cal.setTime(tx.getTimestamp().toDate());
-                                if (cal.get(Calendar.MONTH) == filterMonth && cal.get(Calendar.YEAR) == filterYear) {
-                                    transactionList.add(tx);
-                                    totalCollectedThisMonth += tx.getAmount();
-                                }
+                        if (tx == null) continue;
+
+                        tx.setId(doc.getId());
+                        transactionList.add(tx);
+
+                        if (tx.getTimestamp() != null) {
+
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(tx.getTimestamp().toDate());
+
+                            if (cal.get(Calendar.MONTH) == currentMonth &&
+                                    cal.get(Calendar.YEAR) == currentYear) {
+
+                                totalCollectedThisMonth += tx.getAmount();
                             }
                         }
                     }
-                    tvCollected.setText(String.format(Locale.getDefault(), "%s %d", currencySymbol, (int) totalCollectedThisMonth));
+
+                    tvCollected.setText(String.format(Locale.getDefault(),
+                            "%s %d", currencySymbol, (int) totalCollectedThisMonth));
+
                     transactionAdapter.notifyDataSetChanged();
+
                     calculateOverallProgress();
                 });
 
-        invoicesListener = db.collection("users").document(userId).collection("invoices")
+        // INVOICES
+        invoicesListener = db.collection("users")
+                .document(userId)
+                .collection("invoices")
                 .addSnapshotListener((value, error) -> {
+
                     if (error != null || value == null || !isAdded()) return;
-                    
+
                     double totalDue = 0;
                     double totalOverdue = 0;
                     totalExpectedThisMonth = 0;
-                    
+
                     Map<String, BatchFinanceModel> batchMap = new HashMap<>();
                     Map<String, Set<String>> batchStudentsMap = new HashMap<>();
 
                     for (DocumentSnapshot doc : value.getDocuments()) {
+
                         InvoiceModel inv = doc.toObject(InvoiceModel.class);
-                        if (inv != null) {
-                            Calendar invMonth = Calendar.getInstance();
-                            if (inv.getMonth() != null) {
-                                invMonth.setTime(inv.getMonth().toDate());
-                                if (invMonth.get(Calendar.MONTH) == filterMonth && invMonth.get(Calendar.YEAR) == filterYear) {
-                                    totalExpectedThisMonth += inv.getAmount();
-                                    
-                                    if ("Due".equals(inv.getStatus())) totalDue += inv.getDueAmount();
-                                    else if ("Overdue".equals(inv.getStatus())) totalOverdue += inv.getDueAmount();
+                        if (inv == null) continue;
 
-                                    Set<String> students = batchStudentsMap.get(inv.getBatchId());
-                                    if (students == null) {
-                                        students = new HashSet<>();
-                                        batchStudentsMap.put(inv.getBatchId(), students);
-                                    }
-                                    students.add(inv.getStudentId());
+                        if (inv.getMonth() == null) continue;
 
-                                    BatchFinanceModel bfm = batchMap.get(inv.getBatchId());
-                                    if (bfm == null) {
-                                        bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(), 
-                                                inv.getPaidAmount(), inv.getDueAmount(), 1);
-                                    } else {
-                                        bfm = new BatchFinanceModel(inv.getBatchId(), inv.getBatchName(),
-                                                bfm.getCollectedAmount() + inv.getPaidAmount(),
-                                                bfm.getDueAmount() + inv.getDueAmount(),
-                                                students.size());
-                                    }
-                                    batchMap.put(inv.getBatchId(), bfm);
-                                }
+                        Calendar invMonth = Calendar.getInstance();
+                        invMonth.setTime(inv.getMonth().toDate());
+
+                        if (invMonth.get(Calendar.MONTH) != currentMonth ||
+                                invMonth.get(Calendar.YEAR) != currentYear) {
+                            continue;
+                        }
+
+                        double amount = inv.getAmount();
+                        double paid = inv.getPaidAmount();
+                        double due = Math.max(0, amount - paid);
+
+                        totalExpectedThisMonth += amount;
+
+                        if (due > 0) {
+                            totalDue += due;
+
+                            if ("Overdue".equals(inv.getStatus())) {
+                                totalOverdue += due;
                             }
                         }
+
+                        String batchId = inv.getBatchId();
+                        String batchName = inv.getBatchName();
+
+                        if (batchId == null) continue;
+
+                        Set<String> students = batchStudentsMap.get(batchId);
+
+                        if (students == null) {
+                            students = new HashSet<>();
+                            batchStudentsMap.put(batchId, students);
+                        }
+
+                        students.add(inv.getStudentId());
+
+                        BatchFinanceModel batch = batchMap.get(batchId);
+
+                        if (batch == null) {
+
+                            batch = new BatchFinanceModel(
+                                    batchId,
+                                    batchName,
+                                    paid,
+                                    due,
+                                    students.size()
+                            );
+
+                        } else {
+
+                            batch = new BatchFinanceModel(
+                                    batchId,
+                                    batchName,
+                                    batch.getCollectedAmount() + paid,
+                                    batch.getDueAmount() + due,
+                                    students.size()
+                            );
+                        }
+
+                        batchMap.put(batchId, batch);
                     }
 
-                    tvDue.setText(String.format(Locale.getDefault(), "%s %d", currencySymbol, (int) totalDue));
-                    tvOverdue.setText(String.format(Locale.getDefault(), "%s %d", currencySymbol, (int) totalOverdue));
-                    tvForecast.setText(String.format(Locale.getDefault(), "%s %s %d", getString(R.string.expected), currencySymbol, (int) totalExpectedThisMonth));
-                    
+                    tvDue.setText(String.format(Locale.getDefault(),
+                            "%s %d", currencySymbol, (int) totalDue));
+
+                    tvOverdue.setText(String.format(Locale.getDefault(),
+                            "%s %d", currencySymbol, (int) totalOverdue));
+
+                    tvForecast.setText(String.format(Locale.getDefault(),
+                            "%s %s %d",
+                            getString(R.string.expected),
+                            currencySymbol,
+                            (int) totalExpectedThisMonth));
+
                     batchFinanceList.clear();
-                    for (BatchFinanceModel model : batchMap.values()) {
-                        Set<String> students = batchStudentsMap.get(model.getBatchId());
-                        if (students != null) {
-                            batchFinanceList.add(new BatchFinanceModel(model.getBatchId(), model.getBatchName(), 
-                                model.getCollectedAmount(), model.getDueAmount(), students.size()));
-                        }
-                    }
+                    batchFinanceList.addAll(batchMap.values());
+
                     batchFinanceAdapter.notifyDataSetChanged();
+
                     calculateOverallProgress();
                 });
     }
@@ -275,7 +342,26 @@ public class FinancesFragment extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroyView();
         if (transactionsListener != null) transactionsListener.remove();
         if (invoicesListener != null) invoicesListener.remove();
@@ -300,7 +386,7 @@ public class FinancesFragment extends Fragment {
                             Double total = doc.getDouble("amount");
                             if (currentPaid == null) currentPaid = 0.0;
                             if (total == null) total = 0.0;
-                            
+
                             double newPaid = Math.max(0, currentPaid - tx.getAmount());
                             String newStatus = newPaid < total ? "Due" : "Paid";
                             doc.getReference().update("paidAmount", newPaid, "status", newStatus);
@@ -364,7 +450,7 @@ public class FinancesFragment extends Fragment {
 
         List<String> studentNames = new ArrayList<>();
         Map<String, DocumentSnapshot> studentMap = new HashMap<>();
-        
+
         db.collection("users").document(userId).collection("students").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!isAdded()) return;
@@ -375,7 +461,7 @@ public class FinancesFragment extends Fragment {
                             studentMap.put(name, doc);
                         }
                     }
-                    studentSpinner.setAdapter(new ArrayAdapter<>(requireContext(), 
+                    studentSpinner.setAdapter(new ArrayAdapter<>(requireContext(),
                             android.R.layout.simple_dropdown_item_1line, studentNames));
                 });
 
@@ -384,12 +470,12 @@ public class FinancesFragment extends Fragment {
             String selectedName = studentSpinner.getText().toString();
             String amountStr = etAmount.getText() != null ? etAmount.getText().toString() : "";
             String dateStr = etDate.getText().toString();
-            
+
             if (selectedName.isEmpty() || amountStr.isEmpty() || dateStr.isEmpty()) {
                 btnSave.setEnabled(true);
                 return;
             }
-            
+
             double amount;
             try {
                 amount = Double.parseDouble(amountStr);
@@ -451,14 +537,14 @@ public class FinancesFragment extends Fragment {
                         Double total = invDoc.getDouble("amount");
                         if (currentPaid == null) currentPaid = 0.0;
                         if (total == null) total = 0.0;
-                        
+
                         double newPaid = currentPaid + amount;
                         invDoc.getReference().update("paidAmount", newPaid, "status", newPaid >= total ? "Paid" : invDoc.getString("status"));
                     }
 
                     String txId = db.collection("users").document(userId).collection("transactions").document().getId();
                     TransactionModel tx = new TransactionModel(txId, studentId, studentName, batchId, invoiceId, amount, method, timestamp, "");
-                    
+
                     db.collection("users").document(userId).collection("transactions").document(txId).set(tx)
                             .addOnSuccessListener(aVoid -> {
                                 dialog.dismiss();
@@ -473,7 +559,7 @@ public class FinancesFragment extends Fragment {
 
     private void updateExistingTransaction(BottomSheetDialog dialog, TransactionModel tx, double newAmount, String newMethod, Timestamp timestamp) {
         double diff = newAmount - tx.getAmount();
-        
+
         if (tx.getInvoiceId() != null && diff != 0) {
             db.collection("users").document(userId).collection("invoices").document(tx.getInvoiceId())
                     .get().addOnSuccessListener(doc -> {
@@ -482,7 +568,7 @@ public class FinancesFragment extends Fragment {
                             Double total = doc.getDouble("amount");
                             if (currentPaid == null) currentPaid = 0.0;
                             if (total == null) total = 0.0;
-                            
+
                             double updatedPaid = currentPaid + diff;
                             doc.getReference().update("paidAmount", updatedPaid, "status", updatedPaid >= total ? "Paid" : "Due");
                         }
@@ -508,14 +594,14 @@ public class FinancesFragment extends Fragment {
 
         Canvas canvas = page.getCanvas();
         Paint paint = new Paint();
-        
+
         // Header
         paint.setColor(Color.BLACK);
         paint.setTextSize(14f);
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         int x = 10, y = 30;
         canvas.drawText("TEACHSYNC - RECEIPT", x, y, paint);
-        
+
         // Receipt Info
         paint.setTypeface(Typeface.DEFAULT);
         paint.setTextSize(10f);
@@ -526,12 +612,12 @@ public class FinancesFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
         String dateStr = tx.getTimestamp() != null ? sdf.format(tx.getTimestamp().toDate()) : "N/A";
         canvas.drawText("Date: " + dateStr, x, y, paint);
-        
+
         // Separator
         y += 20;
         paint.setStrokeWidth(1f);
         canvas.drawLine(x, y, 290, y, paint);
-        
+
         // Bill To
         y += 30;
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
@@ -539,7 +625,7 @@ public class FinancesFragment extends Fragment {
         y += 20;
         paint.setTypeface(Typeface.DEFAULT);
         canvas.drawText(tx.getStudentName() != null ? tx.getStudentName() : "Unknown Student", x, y, paint);
-        
+
         // Table Header
         y += 40;
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
@@ -547,29 +633,29 @@ public class FinancesFragment extends Fragment {
         canvas.drawText("Amount", 220, y, paint);
         y += 10;
         canvas.drawLine(x, y, 290, y, paint);
-        
+
         // Table Row
         y += 30;
         paint.setTypeface(Typeface.DEFAULT);
         canvas.drawText("Tuition Fee Payment", x, y, paint);
         canvas.drawText(currencySymbol + " " + (int)tx.getAmount(), 220, y, paint);
-        
+
         // Footer Separator
         y += 40;
         canvas.drawLine(x, y, 290, y, paint);
-        
+
         // Total
         y += 25;
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         canvas.drawText("Total Paid:", x, y, paint);
         canvas.drawText(currencySymbol + " " + (int)tx.getAmount(), 220, y, paint);
-        
+
         // Payment Method
         y += 40;
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
         paint.setTextSize(9f);
         canvas.drawText("Payment Method: " + (tx.getMethod() != null ? tx.getMethod() : "N/A"), x, y, paint);
-        
+
         // Thank You Note
         y += 40;
         paint.setTextAlign(Paint.Align.CENTER);
@@ -583,10 +669,10 @@ public class FinancesFragment extends Fragment {
             document.close();
             return;
         }
-        
+
         String fileName = "Receipt_" + (tx.getId() != null && tx.getId().length() >= 5 ? tx.getId().substring(0, 5) : "DOC") + ".pdf";
         File pdfFile = new File(dir, fileName);
-        
+
         try {
             document.writeTo(new FileOutputStream(pdfFile));
             Toast.makeText(getContext(), R.string.pdf_generated, Toast.LENGTH_SHORT).show();

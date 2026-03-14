@@ -62,7 +62,8 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         String subject = batch.getSubject() != null ? batch.getSubject() : "";
         holder.tvSubject.setText("Subject: " + subject);
 
-        holder.tvEnrolledCount.setText(batch.getEnrolledCount() + " Students");
+        String capacity = batch.getMaxCapacity() > 0 ? " / " + batch.getMaxCapacity() : "";
+        holder.tvEnrolledCount.setText(batch.getEnrolledCount() + capacity + " Students");
 
         holder.tvTime.setText(formatTime(batch.getStartTime())
                 + " – " + formatTime(batch.getEndTime()));
@@ -108,6 +109,11 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     private String formatTime(Timestamp timestamp) {
         if (timestamp == null) return "--";
         return new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(timestamp.toDate());
+    }
+
+    private String formatTime24(Timestamp timestamp) {
+        if (timestamp == null) return "";
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(timestamp.toDate());
     }
 
     private String formatDuration(long minutes) {
@@ -156,8 +162,13 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
             for (BatchModel b : fullList) {
                 boolean nameMatch    = b.getName() != null && b.getName().toLowerCase(Locale.getDefault()).contains(q);
                 boolean subjectMatch = b.getSubject() != null && b.getSubject().toLowerCase(Locale.getDefault()).contains(q);
-                boolean timeMatch    = formatTime(b.getStartTime()).toLowerCase(Locale.getDefault()).contains(q)
-                                    || formatTime(b.getEndTime()).toLowerCase(Locale.getDefault()).contains(q);
+                
+                // Include AM/PM formatted time AND 24h format for precision
+                String timeStr = (formatTime(b.getStartTime()) + " " + formatTime(b.getEndTime())).toLowerCase(Locale.getDefault());
+                String time24Str = formatTime24(b.getStartTime()) + " " + formatTime24(b.getEndTime());
+                
+                boolean timeMatch = timeStr.contains(q) || time24Str.contains(q);
+
                 if (nameMatch || subjectMatch || timeMatch) displayList.add(b);
             }
         }

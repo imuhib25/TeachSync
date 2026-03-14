@@ -212,14 +212,15 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
         refreshChips(chipGroup, selectedBatches);
 
-        Map<String, String> batchIdMap = new HashMap<>();
+        Map<String, BatchModel> batchMap = new HashMap<>();
         List<String> allBatchNames = new ArrayList<>();
         db.collection("users").document(currentUserId).collection("batches").get().addOnSuccessListener(snapshot -> {
             for (DocumentSnapshot doc : snapshot) {
-                String bName = doc.getString("name");
-                if (bName != null) {
-                    allBatchNames.add(bName);
-                    batchIdMap.put(bName, doc.getId());
+                BatchModel b = doc.toObject(BatchModel.class);
+                if (b != null) {
+                    b.setId(doc.getId());
+                    allBatchNames.add(b.getName());
+                    batchMap.put(b.getName(), b);
                 }
             }
             ArrayAdapter<String> batchAdapter = new ArrayAdapter<>(activity, android.R.layout.simple_dropdown_item_1line, allBatchNames);
@@ -228,6 +229,12 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
         etBatch.setOnItemClickListener((parent1, view1, position, id) -> {
             String selected = (String) parent1.getItemAtPosition(position);
+            BatchModel b = batchMap.get(selected);
+            if (b != null && b.getMaxCapacity() > 0 && b.getEnrolledCount() >= b.getMaxCapacity() && !selectedBatches.contains(selected)) {
+                Toast.makeText(activity, "Batch " + selected + " is full!", Toast.LENGTH_SHORT).show();
+                etBatch.setText("");
+                return;
+            }
             if (!selectedBatches.contains(selected)) {
                 selectedBatches.add(selected);
                 refreshChips(chipGroup, selectedBatches);
@@ -246,20 +253,33 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
                 return;
             }
 
+            // --- DUPLICATE CHECK ---
+            for (StudentModel s : fullList) {
+                if (s.getId().equals(student.getId())) continue;
+                if (!newPhone.isEmpty() && newPhone.equals(s.getPhone())) {
+                    Toast.makeText(activity, "Another student already has this phone number", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!newEmail.isEmpty() && newEmail.equalsIgnoreCase(s.getEmail())) {
+                    Toast.makeText(activity, "Another student already has this email", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
             WriteBatch writeBatch = db.batch();
             List<String> oldBatches = student.getBatches();
             
             for (String b : oldBatches) {
                 if (!selectedBatches.contains(b)) {
-                    String bId = batchIdMap.get(b);
-                    if (bId != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bId), "enrolledCount", FieldValue.increment(-1));
+                    BatchModel bModel = batchMap.get(b);
+                    if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(-1));
                 }
             }
             
             for (String b : selectedBatches) {
                 if (!oldBatches.contains(b)) {
-                    String bId = batchIdMap.get(b);
-                    if (bId != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bId), "enrolledCount", FieldValue.increment(1));
+                    BatchModel bModel = batchMap.get(b);
+                    if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(1));
                 }
             }
 
@@ -274,6 +294,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
             writeBatch.commit().addOnSuccessListener(unused -> {
                 Toast.makeText(activity, R.string.student_updated, Toast.LENGTH_SHORT).show();
+                FinanceAutoGenerator.generateMonthlyInvoices(activity, currentUserId);
                 dialog.dismiss();
             }).addOnFailureListener(e -> Toast.makeText(activity, R.string.update_failed, Toast.LENGTH_SHORT).show());
         });

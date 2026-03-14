@@ -2,5 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="purple_500">#2962FF</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="accent_blue">#5667FF</color>
+    <color name="dark_bg">#0B1023</color>
+    <color name="card_dark">#1A2140</color>
+    <color name="stroke_color">#26304D</color>
+    <color name="text_secondary">#A0A8C0</color>
+    <color name="text_primary">#FFFFFF</color>
 </resources>

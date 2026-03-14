@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.intisarmuhib.teachsync" />
-                  <option name="mobileSdkAppId" value="1:699040988657:android:3d922362f9087100545850" />
-                  <option name="projectId" value="teachsync-tuition" />
-                  <option name="projectNumber" value="699040988657" />
+                  <option name="mobileSdkAppId" value="1:293207710192:android:e1166c899d0a35e86d2535" />
+                  <option name="projectId" value="teachsync-app" />
+                  <option name="projectNumber" value="293207710192" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

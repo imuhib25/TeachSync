@@ -25,6 +25,8 @@ import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -35,6 +37,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.WriteBatch;
@@ -87,6 +90,7 @@ public class BatchesActivity extends AppCompatActivity {
     };
 
     private LinearLayout layoutEmpty;
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +112,13 @@ public class BatchesActivity extends AppCompatActivity {
             return;
         }
         userId = currentUser.getUid();
+
+        // Initialize and load Banner Ad
+        mAdView = findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }
 
         batchList = new ArrayList<>();
         adapter   = new BatchAdapter(this, batchList, new BatchAdapter.OnBatchClickListener() {
@@ -192,7 +203,10 @@ public class BatchesActivity extends AppCompatActivity {
         tvSubject.setText("Subject: " + batch.getSubject());
         tvTime.setText("Time: " + timeStr);
         tvDuration.setText("Duration: " + durationStr);
-        tvEnrolled.setText("Enrolled Students: " + batch.getEnrolledCount());
+        
+        String capStr = batch.getMaxCapacity() > 0 ? " / " + batch.getMaxCapacity() : " (Unlimited)";
+        tvEnrolled.setText("Enrolled Students: " + batch.getEnrolledCount() + capStr);
+        
         tvPayment.setText("Payment per Student: ৳ " + (int)batch.getPaymentPerStudent());
         tvClasses.setText("Monthly Classes: " + batch.getTotalMonthlyClasses());
         tvCycle.setText("Cycle Count: " + batch.getCycleCount());
@@ -290,7 +304,7 @@ public class BatchesActivity extends AppCompatActivity {
     }
 
     private void openPdf(File file) {
-        Uri path = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        Uri path = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(path, "application/pdf");
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -325,6 +339,18 @@ public class BatchesActivity extends AppCompatActivity {
         db.collection("users").document(userId)
                 .collection("batches").document(batch.getId()).delete();
 
+        // Remove batch from all students
+        db.collection("users").document(userId).collection("students")
+                .whereArrayContains("batches", batch.getName())
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    WriteBatch writeBatch = db.batch();
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        writeBatch.update(doc.getReference(), "batches", FieldValue.arrayRemove(batch.getName()));
+                    }
+                    writeBatch.commit();
+                });
+
         // Also delete all invoices associated with this batch
         db.collection("users").document(userId)
                 .collection("invoices")
@@ -353,7 +379,26 @@ public class BatchesActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroy();
         if (batchesListener != null) batchesListener.remove();
     }
@@ -412,6 +457,7 @@ public class BatchesActivity extends AppCompatActivity {
         AutoCompleteTextView etSubject      = view.findViewById(R.id.etSubject);
         AutoCompleteTextView etMonthly      = view.findViewById(R.id.etMonthlyClasses);
         TextInputEditText etPayment         = view.findViewById(R.id.etPayment);
+        TextInputEditText etMaxCapacity     = view.findViewById(R.id.etMaxCapacity);
         TextInputEditText etStart           = view.findViewById(R.id.etStartTime);
         TextInputEditText etEnd             = view.findViewById(R.id.etEndTime);
         TextView tvDuration                 = view.findViewById(R.id.tvDuration);
@@ -465,6 +511,7 @@ public class BatchesActivity extends AppCompatActivity {
             etSubject.setText(editBatch.getSubject());
             etMonthly.setText(String.valueOf(editBatch.getTotalMonthlyClasses()), false);
             etPayment.setText(String.valueOf(editBatch.getPaymentPerStudent()));
+            etMaxCapacity.setText(String.valueOf(editBatch.getMaxCapacity()));
 
             if (editBatch.getStartTime() != null) {
                 Calendar sc = Calendar.getInstance();
@@ -518,6 +565,7 @@ public class BatchesActivity extends AppCompatActivity {
             String subject    = etSubject.getText().toString().trim();
             String monthlyStr = etMonthly.getText().toString().trim();
             String paymentStr = etPayment.getText().toString().trim();
+            String maxCapStr  = etMaxCapacity.getText().toString().trim();
 
             if (name.isEmpty() || subject.isEmpty() || monthlyStr.isEmpty() || paymentStr.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
@@ -540,6 +588,7 @@ public class BatchesActivity extends AppCompatActivity {
             long duration = endTotal - startTotal;
             int totalMonthlyClasses = Integer.parseInt(monthlyStr);
             double paymentPerStudent = Double.parseDouble(paymentStr);
+            int maxCapacity = maxCapStr.isEmpty() ? 0 : Integer.parseInt(maxCapStr);
 
             boolean isAuto = radioAuto.isChecked();
             List<Integer> selectedDays = new ArrayList<>();
@@ -662,6 +711,7 @@ public class BatchesActivity extends AppCompatActivity {
                            : new Timestamp(Calendar.getInstance().getTime())
             );
             
+            batch.setMaxCapacity(maxCapacity);
             batch.setAutoSchedule(isAuto);
             if (isAuto) {
                 batch.setSelectedDays(selectedDays);

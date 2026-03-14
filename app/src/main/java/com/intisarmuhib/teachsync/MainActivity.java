@@ -24,6 +24,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -37,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(
                     new ActivityResultContracts.RequestPermission(),
                     granted -> {});
+
+    private AdView mAdView;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -71,6 +75,13 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
+        }
+
+        // Initialize and load Banner Ad
+        mAdView = findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
         }
 
         // AUTO-GENERATE INVOICES ON APP START
@@ -139,5 +150,29 @@ public class MainActivity extends AppCompatActivity {
                 notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 }

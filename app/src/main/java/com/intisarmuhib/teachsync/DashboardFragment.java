@@ -21,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentChange;
@@ -51,6 +53,7 @@ public class DashboardFragment extends Fragment {
     private RecyclerView rvActivity;
     private ActivityAdapter activityAdapter;
     private String currencySymbol = "৳";
+    private AdView mAdView;
 
     private ListenerRegistration transactionsListener;
     private ListenerRegistration invoicesListener;
@@ -84,6 +87,13 @@ public class DashboardFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
+
+        // Initialize and load Banner Ad
+        mAdView = view.findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }
 
         loadCurrency();
 
@@ -335,7 +345,26 @@ public class DashboardFragment extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroyView();
         if (transactionsListener != null) transactionsListener.remove();
         if (invoicesListener != null) invoicesListener.remove();

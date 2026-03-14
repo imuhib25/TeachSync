@@ -49,7 +49,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     }
 
     public interface OnStatusUpdateListener {
-        void onStatusUpdate(ClassModel model, String newStatus);
+        void onStatusUpdate(ClassModel model, String oldStatus, String newStatus);
     }
 
     public void setListener(OnItemClickListener listener) {
@@ -183,6 +183,9 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     }
 
     private void updateStatus(ClassModel model, String newStatus) {
+        String oldStatus = model.getStatus();
+        if (newStatus.equals(oldStatus)) return;
+
         model.setStatus(newStatus);
         notifyDataSetChanged();
         
@@ -195,7 +198,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         }
         
         if (statusListener != null) {
-            statusListener.onStatusUpdate(model, newStatus);
+            statusListener.onStatusUpdate(model, oldStatus, newStatus);
         }
     }
 

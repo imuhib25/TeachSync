@@ -27,6 +27,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -61,6 +63,7 @@ public class StudentsActivity extends AppCompatActivity {
 
     private List<String> batchList = new ArrayList<>();
     private Map<String, String> batchIdMap = new HashMap<>();
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +89,13 @@ public class StudentsActivity extends AppCompatActivity {
             Toast.makeText(this, "Session Expired", Toast.LENGTH_SHORT).show();
             finish();
             return;
+        }
+
+        // Initialize and load Banner Ad
+        mAdView = findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
         }
 
         backButton.setOnClickListener(v -> onBackPressed());
@@ -144,7 +154,7 @@ public class StudentsActivity extends AppCompatActivity {
                                             "enrolledCount", FieldValue.increment(1));
                                 }
                             }
-                            restoreBatch.commit();
+                            restoreBatch.commit().addOnSuccessListener(unused -> FinanceAutoGenerator.generateMonthlyInvoices(StudentsActivity.this, userID));
                         }).show();
             }).addOnFailureListener(e -> {
                 Toast.makeText(this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -243,6 +253,18 @@ public class StudentsActivity extends AppCompatActivity {
                 return;
             }
 
+            // --- DUPLICATE CHECK ---
+            for (StudentModel s : studentList) {
+                if (!phone.isEmpty() && phone.equals(s.getPhone())) {
+                    Toast.makeText(this, "Student with this phone number already exists", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!email.isEmpty() && email.equalsIgnoreCase(s.getEmail())) {
+                    Toast.makeText(this, "Student with this email already exists", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
             btnSave.setEnabled(false);
             
             WriteBatch batch = db.batch();
@@ -268,6 +290,7 @@ public class StudentsActivity extends AppCompatActivity {
 
             batch.commit().addOnSuccessListener(aVoid -> {
                 Toast.makeText(this, "Student Added Successfully", Toast.LENGTH_SHORT).show();
+                FinanceAutoGenerator.generateMonthlyInvoices(this, userID);
                 dialog.dismiss();
             }).addOnFailureListener(e -> {
                 btnSave.setEnabled(true);
@@ -303,5 +326,29 @@ public class StudentsActivity extends AppCompatActivity {
             }
             @Override public void afterTextChanged(Editable s) {}
         });
+    }
+
+    @Override
+    protected void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 }

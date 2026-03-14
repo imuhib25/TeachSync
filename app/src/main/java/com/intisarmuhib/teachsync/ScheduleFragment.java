@@ -83,6 +83,7 @@ public class ScheduleFragment extends Fragment {
 
         generateDateChips();
         adapter.setListener(this::showClassBottomSheet);
+        adapter.setStatusUpdateListener(this::handleStatusUpdate);
         fabAdd.setOnClickListener(v -> showClassBottomSheet(null));
 
         btnPrevMonth.setOnClickListener(v -> {
@@ -98,6 +99,27 @@ public class ScheduleFragment extends Fragment {
         btnClearData.setOnClickListener(v -> showClearDataConfirmation());
 
         return view;
+    }
+
+    private void handleStatusUpdate(ClassModel model, String oldStatus, String newStatus) {
+        if (model.isExtra()) return;
+
+        boolean wasCompleted = "completed".equals(oldStatus);
+        boolean isCompleted = "completed".equals(newStatus);
+
+        if (wasCompleted == isCompleted) return;
+
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
+
+        DocumentReference batchRef = db.collection("users").document(userId)
+                .collection("batches").document(model.getBatchId());
+
+        if (isCompleted) {
+            batchRef.update("currentMonthCount", FieldValue.increment(1));
+        } else {
+            batchRef.update("currentMonthCount", FieldValue.increment(-1));
+        }
     }
 
     private void showClearDataConfirmation() {
@@ -123,7 +145,7 @@ public class ScheduleFragment extends Fragment {
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         ClassModel model = doc.toObject(ClassModel.class);
                         if (model != null) {
-                            if (!model.isExtra()) {
+                            if (!model.isExtra() && "completed".equals(model.getStatus())) {
                                 decrementBatchCount(model.getBatchId());
                             }
                             cancelNotifications(doc.getId());
@@ -436,14 +458,14 @@ public class ScheduleFragment extends Fragment {
         data.put("monthlyNumber", classNumber);
         data.put("cycleNumber",   cycleCount);
         data.put("totalInCycle",  total);
+        if (!isEdit) {
+            data.put("status", "scheduled");
+        }
 
         DocumentReference classRef = (isEdit && existingModel != null) ? db.collection("users").document(userId).collection("classes").document(existingModel.getId()) : db.collection("users").document(userId).collection("classes").document();
 
         classRef.set(data).addOnSuccessListener(aVoid -> {
             if (!isAdded()) return;
-            if (!isEdit && !isExtra) {
-                batchRef.update("currentMonthCount", currentTaken + 1);
-            }
             dialog.dismiss();
             Snackbar.make(recyclerView, "Class saved", Snackbar.LENGTH_SHORT).show();
 
@@ -553,7 +575,9 @@ public class ScheduleFragment extends Fragment {
             if (!isAdded()) return;
             if (!deleted.isExtra()) {
                 renumberCycle(deleted.getBatchId(), deleted.getCycleNumber());
-                decrementBatchCount(deleted.getBatchId());
+                if ("completed".equals(deleted.getStatus())) {
+                    decrementBatchCount(deleted.getBatchId());
+                }
             }
             cancelNotifications(deleted.getId());
         });
@@ -578,13 +602,7 @@ public class ScheduleFragment extends Fragment {
     private void decrementBatchCount(String batchId) {
         String userId = FirebaseAuth.getInstance().getUid();
         DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batchId);
-        batchRef.get().addOnSuccessListener(snap -> {
-            if (snap.exists()) {
-                Long currentCount = snap.getLong("currentMonthCount");
-                int newVal = Math.max(0, (currentCount != null ? currentCount.intValue() : 0) - 1);
-                batchRef.update("currentMonthCount", newVal);
-            }
-        });
+        batchRef.update("currentMonthCount", FieldValue.increment(-1));
     }
 
     // ── NOTIFICATION & ALARM ──────────────────────────────────────────

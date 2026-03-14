@@ -17,6 +17,7 @@ public class BatchModel {
     private double paymentPerStudent;  // payment per student for this batch
     private Timestamp createdAt;
     private int enrolledCount;         // Number of students in this batch
+    private int maxCapacity;           // Maximum capacity of the batch
     
     // Scheduling preferences
     private boolean autoSchedule;
@@ -42,6 +43,7 @@ public class BatchModel {
         this.cycleCount = cycleCount;
         this.paymentPerStudent = paymentPerStudent;
         this.createdAt = createdAt;
+        this.maxCapacity = 0; // Default unlimited or not set
     }
 
     // Getters
@@ -57,6 +59,7 @@ public class BatchModel {
     public double getPaymentPerStudent() { return paymentPerStudent; }
     public Timestamp getCreatedAt() { return createdAt; }
     public int getEnrolledCount() { return enrolledCount; }
+    public int getMaxCapacity() { return maxCapacity; }
     public boolean isAutoSchedule() { return autoSchedule; }
     public int getWeeklyCount() { return weeklyCount; }
     public List<Integer> getSelectedDays() { return selectedDays; }
@@ -81,6 +84,7 @@ public class BatchModel {
     public void setPaymentPerStudent(double paymentPerStudent) { this.paymentPerStudent = paymentPerStudent; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setEnrolledCount(int enrolledCount) { this.enrolledCount = enrolledCount; }
+    public void setMaxCapacity(int maxCapacity) { this.maxCapacity = maxCapacity; }
     public void setAutoSchedule(boolean autoSchedule) { this.autoSchedule = autoSchedule; }
     public void setWeeklyCount(int weeklyCount) { this.weeklyCount = weeklyCount; }
     public void setSelectedDays(List<Integer> selectedDays) { this.selectedDays = selectedDays; }

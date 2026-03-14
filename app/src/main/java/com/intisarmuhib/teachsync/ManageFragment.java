@@ -16,6 +16,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -32,6 +34,7 @@ public class ManageFragment extends Fragment {
     FirebaseAuth mAuth;
     FirebaseFirestore firestore;
     private ListenerRegistration userListener;
+    private AdView mAdView;
 
 
     @Override
@@ -47,6 +50,13 @@ public class ManageFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
+
+        // Initialize and load Banner Ad
+        mAdView = view.findViewById(R.id.adView);
+        if (mAdView != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }
 
         if (mAuth.getCurrentUser() != null) {
             String userId = mAuth.getCurrentUser().getUid();
@@ -72,7 +82,26 @@ public class ManageFragment extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroyView();
         if (userListener != null) {
             userListener.remove();
