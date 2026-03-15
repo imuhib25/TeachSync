@@ -1,76 +1,172 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog"
-    android:orientation="vertical"
-    android:padding="20dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Personal Information"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/etProfileName"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/custom_edittext"
-        android:hint="Full Name"
-        android:paddingStart="10dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0" />
-
-    <EditText
-        android:id="@+id/etProfilePhone"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/custom_edittext"
-        android:hint="Phone"
-        android:paddingStart="10dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0" />
-
-    <EditText
-        android:id="@+id/etProfileDOB"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/custom_edittext"
-        android:hint="Date of Birth (DD/MM/YYYY)"
-        android:paddingStart="10dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#7E89B0" />
+    android:background="@drawable/bg_dialog">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <Button
-            android:id="@+id/btnUpdateProfile"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/btn_dialog_outline"
-            android:text="Update"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF" />
+            android:text="Personal Information"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btnCancelProfile"
+        <EditText
+            android:id="@+id/etProfileName"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Full Name"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <EditText
+            android:id="@+id/etProfilePhone"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Phone"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <EditText
+            android:id="@+id/etProfileDOB"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Date of Birth (DD/MM/YYYY)"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <EditText
+            android:id="@+id/etProfileAddress"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Address"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <EditText
+            android:id="@+id/etProfileProfession"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Profession"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <EditText
+            android:id="@+id/etProfileQualification"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/custom_edittext"
+            android:hint="Qualification"
+            android:paddingStart="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7E89B0" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilBloodGroup"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Blood Group (Optional)"
+            android:textColorHint="#7E89B0"
+            app:hintTextColor="#3B82F6">
+
+            <AutoCompleteTextView
+                android:id="@+id/etProfileBloodGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:textColor="#FFFFFF" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/btn_dialog_outline"
-            android:text="Cancel"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF" />
+            android:layout_marginTop="12dp"
+            android:text="Gender"
+            android:textColor="#7E89B0"
+            android:textSize="14sp" />
+
+        <RadioGroup
+            android:id="@+id/rgProfileGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbMale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Male"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbFemale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Female"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbOther"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Other"
+                android:textColor="#FFFFFF" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnUpdateProfile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_dialog_outline"
+                android:text="Update"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btnCancelProfile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/btn_dialog_outline"
+                android:text="Cancel"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
     </LinearLayout>
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

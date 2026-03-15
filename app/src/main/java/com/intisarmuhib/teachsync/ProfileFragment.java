@@ -2,28 +2,32 @@ package com.intisarmuhib.teachsync;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -35,6 +39,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -69,6 +74,7 @@ public class ProfileFragment extends Fragment {
     private static final String KEY_SOUND = "sound_enabled";
     private static final String KEY_THEME = "app_theme";
     private static final String KEY_LANGUAGE = "app_language";
+    private static final String CHANNEL_ID = "profile_reminder";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -123,11 +129,54 @@ public class ProfileFragment extends Fragment {
                             Glide.with(this).load(avatarUrl).circleCrop().into(profileImage);
                         }
                     }
+                    
+                    checkProfileCompleteness(documentSnapshot);
                 }
             });
         }
 
         return view;
+    }
+
+    private void checkProfileCompleteness(DocumentSnapshot doc) {
+        String name = doc.getString("fName");
+        String phone = doc.getString("phone");
+        String dob = doc.getString("dob");
+        String gender = doc.getString("gender");
+        String address = doc.getString("address");
+        String profession = doc.getString("profession");
+        String qualification = doc.getString("qualification");
+
+        if (name == null || name.isEmpty() ||
+            phone == null || phone.isEmpty() ||
+            dob == null || dob.isEmpty() ||
+            gender == null || gender.isEmpty() ||
+            address == null || address.isEmpty() ||
+            profession == null || profession.isEmpty() ||
+            qualification == null || qualification.isEmpty()) {
+            
+            sendProfileIncompleteNotification();
+        }
+    }
+
+    private void sendProfileIncompleteNotification() {
+        if (getContext() == null) return;
+        
+        NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Profile Reminders", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), CHANNEL_ID)
+                .setSmallIcon(R.drawable.baseline_account_circle_24)
+                .setContentTitle("Complete Your Profile")
+                .setContentText("Please fill in your address, profession, and qualification to keep your profile updated.")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        notificationManager.notify(1, builder.build());
     }
 
     private void showAvatarDialog() {
@@ -335,14 +384,32 @@ public class ProfileFragment extends Fragment {
         EditText etName = dialog.findViewById(R.id.etProfileName);
         EditText etPhone = dialog.findViewById(R.id.etProfilePhone);
         EditText etDOB = dialog.findViewById(R.id.etProfileDOB);
+        EditText etAddress = dialog.findViewById(R.id.etProfileAddress);
+        EditText etProfession = dialog.findViewById(R.id.etProfileProfession);
+        EditText etQualification = dialog.findViewById(R.id.etProfileQualification);
+        AutoCompleteTextView etBloodGroup = dialog.findViewById(R.id.etProfileBloodGroup);
+        RadioGroup rgGender = dialog.findViewById(R.id.rgProfileGender);
         Button btnUpdate = dialog.findViewById(R.id.btnUpdateProfile);
         Button btnCancel = dialog.findViewById(R.id.btnCancelProfile);
+
+        String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, bloodGroups);
+        etBloodGroup.setAdapter(adapter);
 
         firestore.collection("users").document(userId).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 etName.setText(doc.getString("fName"));
                 etPhone.setText(doc.getString("phone"));
                 etDOB.setText(doc.getString("dob"));
+                etAddress.setText(doc.getString("address"));
+                etProfession.setText(doc.getString("profession"));
+                etQualification.setText(doc.getString("qualification"));
+                etBloodGroup.setText(doc.getString("bloodGroup"), false);
+                
+                String gender = doc.getString("gender");
+                if ("Male".equals(gender)) rgGender.check(R.id.rbMale);
+                else if ("Female".equals(gender)) rgGender.check(R.id.rbFemale);
+                else if ("Other".equals(gender)) rgGender.check(R.id.rbOther);
             }
         });
 
@@ -360,6 +427,16 @@ public class ProfileFragment extends Fragment {
             String name = etName.getText().toString();
             String phone = etPhone.getText().toString();
             String dob = etDOB.getText().toString();
+            String address = etAddress.getText().toString();
+            String profession = etProfession.getText().toString();
+            String qualification = etQualification.getText().toString();
+            String bloodGroup = etBloodGroup.getText().toString();
+            
+            int checkedId = rgGender.getCheckedRadioButtonId();
+            String gender = "";
+            if (checkedId == R.id.rbMale) gender = "Male";
+            else if (checkedId == R.id.rbFemale) gender = "Female";
+            else if (checkedId == R.id.rbOther) gender = "Other";
 
             if (name.isEmpty()) {
                 etName.setError("Name required");
@@ -370,6 +447,11 @@ public class ProfileFragment extends Fragment {
             updates.put("fName", name);
             updates.put("phone", phone);
             updates.put("dob", dob);
+            updates.put("gender", gender);
+            updates.put("address", address);
+            updates.put("profession", profession);
+            updates.put("qualification", qualification);
+            updates.put("bloodGroup", bloodGroup);
 
             firestore.collection("users").document(userId).update(updates)
                     .addOnSuccessListener(aVoid -> {

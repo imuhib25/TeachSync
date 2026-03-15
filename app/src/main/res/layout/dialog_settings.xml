@@ -24,7 +24,8 @@
         android:focusable="true"
         android:padding="12dp"
         android:text="Theme (Dark/Light)"
-        android:textColor="#C7D2FF" />
+        android:textColor="#C7D2FF"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/settings_language"

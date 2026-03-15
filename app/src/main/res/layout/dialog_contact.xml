@@ -32,7 +32,8 @@
         android:background="@drawable/btn_dialog_outline"
         android:text="Live Chat"
         android:textAllCaps="false"
-        android:textColor="#FFFFFF" />
+        android:textColor="#FFFFFF"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btnSendFeedback"

@@ -472,17 +472,17 @@ public class BatchesActivity extends AppCompatActivity {
         calendarManual.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
         
         // Setup cool calendar: restrict to current month and hide others
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        Calendar startOfMonth = (Calendar) cal.clone();
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
-        Calendar endOfMonth = (Calendar) cal.clone();
-        
-        calendarManual.state().edit()
-                .setMinimumDate(startOfMonth)
-                .setMaximumDate(endOfMonth)
-                .commit();
+        Calendar min = Calendar.getInstance();
+        min.add(Calendar.YEAR, -1);
 
+        Calendar max = Calendar.getInstance();
+        max.add(Calendar.YEAR, 1);
+
+        calendarManual.state().edit()
+                .setMinimumDate(min)
+                .setMaximumDate(max)
+                .commit();
+        calendarManual.setShowOtherDates(MaterialCalendarView.SHOW_OTHER_MONTHS);
         ChipGroup chipGroupDays = view.findViewById(R.id.chipGroupDays);
 
         etSubject.setAdapter(new ArrayAdapter<>(this,
@@ -614,73 +614,149 @@ public class BatchesActivity extends AppCompatActivity {
             }
 
             // --- CONFLICT CHECK START ---
+
             for (BatchModel other : batchList) {
+
                 if (isEdit && other.getId().equals(editBatch.getId())) continue;
 
-                Calendar oSc = Calendar.getInstance(); oSc.setTime(other.getStartTime().toDate());
-                int oStart = oSc.get(Calendar.HOUR_OF_DAY) * 60 + oSc.get(Calendar.MINUTE);
-                int oEnd = oStart + (int)other.getDurationMinutes();
+                Calendar oSc = Calendar.getInstance();
+                oSc.setTime(other.getStartTime().toDate());
 
-                // Check for time overlap
+                int oStart = oSc.get(Calendar.HOUR_OF_DAY) * 60 + oSc.get(Calendar.MINUTE);
+                int oEnd = oStart + (int) other.getDurationMinutes();
+
+                // Check time overlap
                 if (startTotal < oEnd && endTotal > oStart) {
+
                     boolean dayConflict = false;
                     String conflictInfo = "";
 
+                    // AUTO vs AUTO
                     if (isAuto && other.isAutoSchedule()) {
-                        for (Integer day : selectedDays) {
-                            if (other.getSelectedDays() != null && other.getSelectedDays().contains(day)) {
-                                dayConflict = true;
-                                conflictInfo = getDayName(day) + "s";
-                                break;
+
+                        List<String> conflictDays = new ArrayList<>();
+
+                        if (other.getSelectedDays() != null) {
+                            for (Integer day : selectedDays) {
+
+                                if (other.getSelectedDays().contains(day)) {
+                                    conflictDays.add(getDayName(day));
+                                }
+
                             }
                         }
-                    } else if (!isAuto && !other.isAutoSchedule()) {
+
+                        if (!conflictDays.isEmpty()) {
+                            dayConflict = true;
+                            conflictInfo = String.join(", ", conflictDays);
+                        }
+
+                    }
+
+                    // MANUAL vs MANUAL
+                    else if (!isAuto && !other.isAutoSchedule()) {
+
                         if (other.getManualDates() != null) {
+
                             SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+
                             Set<String> otherDatesStr = new HashSet<>();
-                            for (Timestamp ts : other.getManualDates()) otherDatesStr.add(df.format(ts.toDate()));
+
+                            for (Timestamp ts : other.getManualDates()) {
+                                otherDatesStr.add(df.format(ts.toDate()));
+                            }
+
+                            List<String> conflictDates = new ArrayList<>();
+
                             for (CalendarDay day : selectedDates) {
+
                                 String dStr = df.format(day.getDate());
+
                                 if (otherDatesStr.contains(dStr)) {
-                                    dayConflict = true;
-                                    conflictInfo = dStr;
-                                    break;
+                                    conflictDates.add(dStr);
                                 }
+
                             }
+
+                            if (!conflictDates.isEmpty()) {
+                                dayConflict = true;
+                                conflictInfo = String.join(", ", conflictDates);
+                            }
+
                         }
-                    } else {
-                        // Mixed check
+
+                    }
+
+                    // MIXED CASE
+                    else {
+
                         SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-                        if (isAuto) { // New is auto, Other is manual
+                        List<String> conflictDates = new ArrayList<>();
+
+                        if (isAuto) {
+
                             if (other.getManualDates() != null) {
+
                                 for (Timestamp ts : other.getManualDates()) {
-                                    Calendar c = Calendar.getInstance(); c.setTime(ts.toDate());
+
+                                    Calendar c = Calendar.getInstance();
+                                    c.setTime(ts.toDate());
+
                                     if (selectedDays.contains(c.get(Calendar.DAY_OF_WEEK))) {
-                                        dayConflict = true;
-                                        conflictInfo = df.format(ts.toDate());
-                                        break;
+
+                                        conflictDates.add(df.format(ts.toDate()));
+
                                     }
+
                                 }
+
                             }
-                        } else { // New is manual, Other is auto
+
+                        } else {
+
                             for (CalendarDay day : selectedDates) {
-                                Calendar c = Calendar.getInstance(); c.setTime(day.getDate());
-                                if (other.getSelectedDays() != null && other.getSelectedDays().contains(c.get(Calendar.DAY_OF_WEEK))) {
-                                    dayConflict = true;
-                                    conflictInfo = df.format(day.getDate());
-                                    break;
+
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(day.getDate());
+
+                                if (other.getSelectedDays() != null &&
+                                        other.getSelectedDays().contains(c.get(Calendar.DAY_OF_WEEK))) {
+
+                                    conflictDates.add(df.format(day.getDate()));
+
                                 }
+
                             }
+
                         }
+
+                        if (!conflictDates.isEmpty()) {
+                            dayConflict = true;
+                            conflictInfo = String.join(", ", conflictDates);
+                        }
+
                     }
 
                     if (dayConflict) {
-                        Toast.makeText(this, "Conflict: " + other.getName() + " already has a class on " + conflictInfo + " at an overlapping time.", Toast.LENGTH_LONG).show();
+
+                        Toast.makeText(
+                                this,
+                                "Conflict: " + other.getName() +
+                                        " already has a class on " +
+                                        conflictInfo +
+                                        " at an overlapping time.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
                         return;
+
                     }
+
                 }
+
             }
-            // --- CONFLICT CHECK END ---
+
+// --- CONFLICT CHECK END ---
 
             Calendar startCal = Calendar.getInstance();
             startCal.set(Calendar.HOUR_OF_DAY, startHour);

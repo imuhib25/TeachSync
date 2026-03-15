@@ -24,7 +24,8 @@
         android:focusable="true"
         android:padding="10dp"
         android:text="FAQ"
-        android:textColor="#C7D2FF" />
+        android:textColor="#C7D2FF"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/tvGuidelines"
@@ -36,6 +37,19 @@
         android:focusable="true"
         android:padding="10dp"
         android:text="Guidelines"
+        android:textColor="#C7D2FF" />
+
+
+    <TextView
+        android:id="@+id/tvTutorial"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="10dp"
+        android:text="Youtube Tutorial"
         android:textColor="#C7D2FF" />
 
     <TextView
