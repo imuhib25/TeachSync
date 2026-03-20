@@ -7,20 +7,55 @@
     android:padding="24dp"
     android:background="#0B1020">
 
-    <TextView
-        android:text="Add/Edit Student"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:id="@+id/tvStudentDialogTitle"
+            android:text="Add/Edit Student"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <LinearLayout
+            android:id="@+id/layoutActiveToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Active"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchActive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+    </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="#1A2238">
+        app:boxBackgroundColor="#1A2238"
+        app:startIconDrawable="@drawable/baseline_person_24"
+        app:startIconTint="#94A3B8">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtName"
@@ -37,6 +72,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:textColorHint="#94A3B8"
+        app:startIconDrawable="@drawable/baseline_group_24"
+        app:startIconTint="#94A3B8"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
 
@@ -64,14 +101,17 @@
         android:layout_width="match_parent"
         android:layout_marginTop="16dp"
         app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="#1A2238">
+        app:boxBackgroundColor="#1A2238"
+        app:startIconDrawable="@drawable/baseline_email_24"
+        app:startIconTint="#94A3B8">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtEmail"
             android:hint="Student Email"
             android:textColor="@android:color/white"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -79,14 +119,17 @@
         android:layout_width="match_parent"
         android:layout_marginTop="16dp"
         app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="#1A2238">
+        app:boxBackgroundColor="#1A2238"
+        app:startIconDrawable="@drawable/baseline_phone_24"
+        app:startIconTint="#94A3B8">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtPhone"
             android:hint="Phone Number"
             android:textColor="@android:color/white"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:inputType="phone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -94,7 +137,9 @@
         android:layout_width="match_parent"
         android:layout_marginTop="16dp"
         app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="#1A2238">
+        app:boxBackgroundColor="#1A2238"
+        app:startIconDrawable="@drawable/baseline_person_24"
+        app:startIconTint="#94A3B8">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtParent"

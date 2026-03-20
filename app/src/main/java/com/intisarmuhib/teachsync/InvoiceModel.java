@@ -14,12 +14,19 @@ public class InvoiceModel {
     private String status; // "Paid", "Due", "Overdue"
     private Timestamp month; // Represents the billing month
     private Timestamp createdAt;
+    private int cycleCount;
 
     public InvoiceModel() {}
 
     public InvoiceModel(String id, String studentId, String studentName, String batchId, 
                         String batchName, double amount, double paidAmount, 
                         String status, Timestamp month, Timestamp createdAt) {
+        this(id, studentId, studentName, batchId, batchName, amount, paidAmount, status, month, createdAt, 1);
+    }
+
+    public InvoiceModel(String id, String studentId, String studentName, String batchId,
+                        String batchName, double amount, double paidAmount,
+                        String status, Timestamp month, Timestamp createdAt, int cycleCount) {
         this.id = id;
         this.studentId = studentId;
         this.studentName = studentName;
@@ -30,6 +37,7 @@ public class InvoiceModel {
         this.status = status;
         this.month = month;
         this.createdAt = createdAt;
+        this.cycleCount = cycleCount;
     }
 
     // Getters and Setters
@@ -53,6 +61,8 @@ public class InvoiceModel {
     public void setMonth(Timestamp month) { this.month = month; }
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public int getCycleCount() { return cycleCount; }
+    public void setCycleCount(int cycleCount) { this.cycleCount = cycleCount; }
 
     @Exclude
     public double getDueAmount() {

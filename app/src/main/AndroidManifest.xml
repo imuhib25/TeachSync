@@ -30,6 +30,9 @@
         </provider>
 
         <activity
+            android:name=".TutorialActivity"
+            android:exported="false" />
+        <activity
             android:name=".SubjectsActivity"
             android:exported="false" />
         <activity

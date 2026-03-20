@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -195,6 +197,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
         View view = LayoutInflater.from(activity).inflate(R.layout.bottom_add_student, null);
         dialog.setContentView(view);
 
+        TextView tvTitle = view.findViewById(R.id.tvStudentDialogTitle);
         TextInputEditText nameInput = view.findViewById(R.id.edtName);
         TextInputEditText emailInput = view.findViewById(R.id.edtEmail);
         TextInputEditText phoneInput = view.findViewById(R.id.edtPhone);
@@ -202,7 +205,13 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
         AutoCompleteTextView etBatch = view.findViewById(R.id.etBatchName);
         ChipGroup chipGroup = view.findViewById(R.id.chipGroupBatches);
         MaterialButton btnSave = view.findViewById(R.id.btnSaveStudent);
+        LinearLayout layoutActiveToggle = view.findViewById(R.id.layoutActiveToggle);
+        SwitchMaterial switchActive = view.findViewById(R.id.switchActive);
         
+        if (tvTitle != null) tvTitle.setText(R.string.edit_student);
+        if (layoutActiveToggle != null) layoutActiveToggle.setVisibility(View.VISIBLE);
+        if (switchActive != null) switchActive.setChecked(student.isActive());
+
         List<String> selectedBatches = new ArrayList<>(student.getBatches());
         nameInput.setText(student.getName());
         emailInput.setText(student.getEmail());
@@ -247,6 +256,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
             String newEmail = emailInput.getText() != null ? emailInput.getText().toString().trim() : "";
             String newPhone = phoneInput.getText() != null ? phoneInput.getText().toString().trim() : "";
             String newParent = parentInput.getText() != null ? parentInput.getText().toString().trim() : "";
+            boolean isActive = switchActive != null && switchActive.isChecked();
 
             if (newName.isEmpty() || selectedBatches.isEmpty()) {
                 Toast.makeText(activity, R.string.error_name_batch_required, Toast.LENGTH_SHORT).show();
@@ -269,17 +279,38 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
             WriteBatch writeBatch = db.batch();
             List<String> oldBatches = student.getBatches();
             
-            for (String b : oldBatches) {
-                if (!selectedBatches.contains(b)) {
+            // Only update enrolledCount if active status hasn't changed to inactive
+            // or if it was already active. This logic might get complex.
+            // Simpler: if student is active, manage enrolledCount. If inactive, they shouldn't count?
+            // Usually archived students don't count towards capacity.
+            
+            boolean wasActive = student.isActive();
+            
+            if (wasActive && !isActive) {
+                // Moving to archive: decrement all current batches
+                for (String b : oldBatches) {
                     BatchModel bModel = batchMap.get(b);
                     if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(-1));
                 }
-            }
-            
-            for (String b : selectedBatches) {
-                if (!oldBatches.contains(b)) {
+            } else if (!wasActive && isActive) {
+                // Moving from archive to active: increment all selected batches
+                for (String b : selectedBatches) {
                     BatchModel bModel = batchMap.get(b);
                     if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(1));
+                }
+            } else if (isActive) {
+                // Stayed active: manage batch changes normally
+                for (String b : oldBatches) {
+                    if (!selectedBatches.contains(b)) {
+                        BatchModel bModel = batchMap.get(b);
+                        if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(-1));
+                    }
+                }
+                for (String b : selectedBatches) {
+                    if (!oldBatches.contains(b)) {
+                        BatchModel bModel = batchMap.get(b);
+                        if (bModel != null) writeBatch.update(db.collection("users").document(currentUserId).collection("batches").document(bModel.getId()), "enrolledCount", FieldValue.increment(1));
+                    }
                 }
             }
 
@@ -289,6 +320,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
             updates.put("phone", newPhone);
             updates.put("batches", selectedBatches);
             updates.put("parent", newParent);
+            updates.put("active", isActive);
 
             writeBatch.update(db.collection("users").document(currentUserId).collection("students").document(student.getId()), updates);
 

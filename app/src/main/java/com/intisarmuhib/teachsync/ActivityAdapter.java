@@ -28,7 +28,12 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ActivityModel activity = activityList.get(position);
-        holder.tvContent.setText(activity.getContent());
+        
+        String displayContent = activity.getContent();
+        if (activity.getTitle() != null && !activity.getTitle().isEmpty()) {
+            displayContent = activity.getTitle() + ": " + displayContent;
+        }
+        holder.tvContent.setText(displayContent);
         
         String amount = activity.getAmount();
         if (amount == null || amount.isEmpty()) {

@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
                     granted -> {});
 
     private AdView mAdView;
+    private BottomNavigationView bottomNav;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -66,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            // Remove bottom padding to fix the extra space below BottomNavigationView
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
@@ -79,27 +81,39 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize and load Banner Ad
         mAdView = findViewById(R.id.adView);
-        if (mAdView != null) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
+        AdManager.initAd(this, mAdView);
 
         // AUTO-GENERATE INVOICES ON APP START
         FinanceAutoGenerator.generateMonthlyInvoices(this, currentUser.getUid());
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.dashboard);
         bottomNav.setOnItemSelectedListener(navListener);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new DashboardFragment())
-                    .commit();
+            String startFragment = getIntent().getStringExtra("fragment");
+            if ("schedule".equals(startFragment)) {
+                bottomNav.setSelectedItemId(R.id.nav_schedule);
+            } else {
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new DashboardFragment())
+                        .commit();
+            }
         }
 
         createNotificationChannel();
         requestNotificationPermissionIfNeeded();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        String startFragment = intent.getStringExtra("fragment");
+        if ("schedule".equals(startFragment)) {
+            bottomNav.setSelectedItemId(R.id.nav_schedule);
+        }
     }
 
     private final NavigationBarView.OnItemSelectedListener navListener = item -> {

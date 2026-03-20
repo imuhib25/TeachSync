@@ -5,14 +5,22 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
 
@@ -27,6 +35,9 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -49,6 +60,7 @@ public class ScheduleFragment extends Fragment {
     private ClassAdapter adapter;
     private String selectedDate;
     private Calendar currentCalendar;
+    private String userId;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -68,6 +80,7 @@ public class ScheduleFragment extends Fragment {
         ImageButton btnNextMonth = view.findViewById(R.id.btnNextMonth);
 
         db = FirebaseFirestore.getInstance();
+        userId = FirebaseAuth.getInstance().getUid();
         currentCalendar = Calendar.getInstance();
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -84,6 +97,8 @@ public class ScheduleFragment extends Fragment {
         generateDateChips();
         adapter.setListener(this::showClassBottomSheet);
         adapter.setStatusUpdateListener(this::handleStatusUpdate);
+        adapter.setAttendanceListener(this::showAttendanceDialog);
+        
         fabAdd.setOnClickListener(v -> showClassBottomSheet(null));
 
         btnPrevMonth.setOnClickListener(v -> {
@@ -102,24 +117,112 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void handleStatusUpdate(ClassModel model, String oldStatus, String newStatus) {
-        if (model.isExtra()) return;
-
         boolean wasCompleted = "completed".equals(oldStatus);
         boolean isCompleted = "completed".equals(newStatus);
 
         if (wasCompleted == isCompleted) return;
 
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
 
         DocumentReference batchRef = db.collection("users").document(userId)
                 .collection("batches").document(model.getBatchId());
 
         if (isCompleted) {
-            batchRef.update("currentMonthCount", FieldValue.increment(1));
+            if (!model.isExtra()) {
+                batchRef.update("currentMonthCount", FieldValue.increment(1)).addOnSuccessListener(aVoid -> {
+                    checkBatchCompletionAndNotify(batchRef, model.getBatch());
+                });
+            }
+            
+            // Show Homework Dialog when a class is completed
+            showHomeworkDialog(model);
+            
         } else {
-            batchRef.update("currentMonthCount", FieldValue.increment(-1));
+            if (!model.isExtra()) {
+                batchRef.update("currentMonthCount", FieldValue.increment(-1));
+            }
         }
+    }
+
+    private void showHomeworkDialog(ClassModel completedClass) {
+        if (!isAdded() || getContext() == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Assign Homework");
+        
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter homework for next class");
+        builder.setView(input);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String hw = input.getText().toString().trim();
+            if (!hw.isEmpty()) {
+                saveHomeworkToNextClass(completedClass, hw);
+            }
+        });
+        builder.setNegativeButton("Skip", null);
+        builder.show();
+    }
+
+    private void saveHomeworkToNextClass(ClassModel currentClass, String hw) {
+        if (userId == null) return;
+
+        // Query for the next scheduled class for this batch
+        db.collection("users").document(userId).collection("classes")
+                .whereEqualTo("batchId", currentClass.getBatchId())
+                .whereEqualTo("status", "scheduled")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<ClassModel> scheduledClasses = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        ClassModel cm = doc.toObject(ClassModel.class);
+                        if (cm != null) {
+                            cm.setId(doc.getId());
+                            scheduledClasses.add(cm);
+                        }
+                    }
+
+                    if (scheduledClasses.isEmpty()) {
+                        Toast.makeText(getContext(), "No upcoming classes found to assign HW", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Sort by date and time to find the immediate next class
+                    Collections.sort(scheduledClasses, (o1, o2) -> {
+                        long t1 = parseClassStartMillis(o1.getDate(), o1.getClassTime());
+                        long t2 = parseClassStartMillis(o2.getDate(), o2.getClassTime());
+                        return Long.compare(t1, t2);
+                    });
+
+                    ClassModel nextClass = scheduledClasses.get(0);
+                    db.collection("users").document(userId).collection("classes")
+                            .document(nextClass.getId())
+                            .update("homework", hw)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(getContext(), "Homework assigned to next class", Toast.LENGTH_SHORT).show();
+                            });
+                });
+    }
+
+    private void checkBatchCompletionAndNotify(DocumentReference batchRef, String batchName) {
+        batchRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                Long total = documentSnapshot.getLong("totalMonthlyClasses");
+                Long current = documentSnapshot.getLong("currentMonthCount");
+                if (total != null && current != null && current >= total) {
+                    sendSystemNotification("Cycle Completed", "Total classes for " + batchName + " have been completed.");
+                }
+            }
+        });
+    }
+
+    private void sendSystemNotification(String title, String message) {
+        if (getContext() == null) return;
+        Intent intent = new Intent(getContext(), ClassReminderReceiver.class);
+        intent.putExtra("title", title);
+        intent.putExtra("message", message);
+        intent.putExtra("notificationId", (int) System.currentTimeMillis());
+        getContext().sendBroadcast(intent);
     }
 
     private void showClearDataConfirmation() {
@@ -133,7 +236,6 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void clearAllClassesForSelectedDate() {
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null || selectedDate == null) return;
 
         db.collection("users").document(userId)
@@ -269,7 +371,6 @@ public class ScheduleFragment extends Fragment {
 
     private void loadClasses(String date) {
         if (classListener != null) classListener.remove();
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
 
         classListener = db.collection("users").document(userId)
@@ -354,7 +455,6 @@ public class ScheduleFragment extends Fragment {
             });
         });
 
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
 
         Map<String, String> batchMap = new HashMap<>();
@@ -373,12 +473,14 @@ public class ScheduleFragment extends Fragment {
         });
 
         btnSave.setOnClickListener(v -> {
+            btnSave.setEnabled(false);
             String topic = etTopic.getText() != null ? etTopic.getText().toString().trim() : "";
             String batchName = dropBatch.getText().toString().trim();
             String batchId = batchMap.get(batchName);
             String date = etDate.getText() != null ? etDate.getText().toString() : "";
 
             if (topic.isEmpty() || batchId == null || date.isEmpty()) {
+                btnSave.setEnabled(true);
                 Toast.makeText(getContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -391,7 +493,6 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void saveClass(boolean isEdit, @Nullable ClassModel existingModel, String topic, String batchName, String batchId, String date, boolean isExtra, @Nullable String manualClassNumber, BottomSheetDialog dialog) {
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
 
         DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batchId);
@@ -446,7 +547,7 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void executeSave(boolean isEdit, @Nullable ClassModel existingModel, String topic, String batchName, String batchId, String date, boolean isExtra, String classNumber, String finalTimeText, int cycleCount, int total, int currentTaken, DocumentReference batchRef, BottomSheetDialog dialog) {
-        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
         Map<String, Object> data = new HashMap<>();
         data.put("topic", topic);
         data.put("batch", batchName);
@@ -464,7 +565,7 @@ public class ScheduleFragment extends Fragment {
 
         DocumentReference classRef = (isEdit && existingModel != null) ? db.collection("users").document(userId).collection("classes").document(existingModel.getId()) : db.collection("users").document(userId).collection("classes").document();
 
-        classRef.set(data).addOnSuccessListener(aVoid -> {
+        classRef.set(data, SetOptions.merge()).addOnSuccessListener(aVoid -> {
             if (!isAdded()) return;
             dialog.dismiss();
             Snackbar.make(recyclerView, "Class saved", Snackbar.LENGTH_SHORT).show();
@@ -509,7 +610,6 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void autoScheduleNextCycle(BatchModel batch, int newCycle) {
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
 
         WriteBatch writeBatch = db.batch();
@@ -569,7 +669,6 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void performFinalDelete(ClassModel deleted) {
-        String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) return;
         db.collection("users").document(userId).collection("classes").document(deleted.getId()).delete().addOnSuccessListener(aVoid -> {
             if (!isAdded()) return;
@@ -584,7 +683,7 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void renumberCycle(String batchId, int cycleNumber) {
-        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
         db.collection("users").document(userId).collection("classes")
                 .whereEqualTo("batchId", batchId)
                 .whereEqualTo("cycleNumber", cycleNumber)
@@ -600,9 +699,133 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void decrementBatchCount(String batchId) {
-        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
         DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batchId);
         batchRef.update("currentMonthCount", FieldValue.increment(-1));
+    }
+
+    // ── ATTENDANCE ──────────────────────────────────────────────────
+    private void showAttendanceDialog(ClassModel model) {
+        if (!isAdded() || getContext() == null || userId == null) return;
+
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_attendance, null);
+        dialog.setContentView(view);
+
+        TextView tvInfo = view.findViewById(R.id.tvAttendanceInfo);
+        RecyclerView rv = view.findViewById(R.id.rvAttendance);
+        MaterialButton btnSave = view.findViewById(R.id.btnSaveAttendance);
+        ImageButton btnPdf = view.findViewById(R.id.btnExportAttendancePdf);
+
+        tvInfo.setText(model.getBatch() + " - " + model.getDate());
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        Map<String, String> attendanceMap = model.getAttendance() != null ? new HashMap<>(model.getAttendance()) : new HashMap<>();
+        List<StudentModel> studentList = new ArrayList<>();
+
+        db.collection("users").document(userId).collection("students")
+                .whereArrayContains("batches", model.getBatch())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!isAdded()) return;
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        StudentModel student = doc.toObject(StudentModel.class);
+                        if (student != null) {
+                            student.setId(doc.getId());
+                            studentList.add(student);
+                        }
+                    }
+                    AttendanceAdapter attendanceAdapter = new AttendanceAdapter(studentList, attendanceMap);
+                    rv.setAdapter(attendanceAdapter);
+                });
+
+        btnSave.setOnClickListener(v -> {
+            db.collection("users").document(userId).collection("classes").document(model.getId())
+                    .update("attendance", attendanceMap)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Attendance saved", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    });
+        });
+
+        btnPdf.setOnClickListener(v -> generateAttendancePdf(model, studentList, attendanceMap));
+
+        dialog.show();
+    }
+
+    private void generateAttendancePdf(ClassModel model, List<StudentModel> students, Map<String, String> attendance) {
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4
+        PdfDocument.Page page = document.startPage(pageInfo);
+
+        Canvas canvas = page.getCanvas();
+        Paint paint = new Paint();
+
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(18f);
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        int x = 40, y = 50;
+        canvas.drawText("TeachSync - Class Attendance Report", x, y, paint);
+
+        paint.setTextSize(12f);
+        paint.setTypeface(Typeface.DEFAULT);
+        y += 30;
+        canvas.drawText("Batch: " + model.getBatch(), x, y, paint);
+        y += 20;
+        canvas.drawText("Topic: " + (model.getTopic() != null ? model.getTopic() : "N/A"), x, y, paint);
+        y += 20;
+        canvas.drawText("Date: " + model.getDate() + " | " + model.getClassTime(), x, y, paint);
+
+        y += 40;
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        canvas.drawText("Student Name", x, y, paint);
+        canvas.drawText("Status", 450, y, paint);
+        y += 10;
+        canvas.drawLine(x, y, 555, y, paint);
+
+        paint.setTypeface(Typeface.DEFAULT);
+        for (StudentModel student : students) {
+            y += 25;
+            if (y > 800) {
+                document.finishPage(page);
+                page = document.startPage(pageInfo);
+                canvas = page.getCanvas();
+                y = 50;
+            }
+            canvas.drawText(student.getName(), x, y, paint);
+            String status = attendance.get(student.getId());
+            if (status == null) status = "Present";
+            canvas.drawText(status, 450, y, paint);
+        }
+
+        document.finishPage(page);
+
+        File dir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        String fileName = "Attendance_" + model.getBatch().replaceAll("\\s+", "_") + "_" + model.getDate().replaceAll("\\s+", "_") + ".pdf";
+        File pdfFile = new File(dir, fileName);
+
+        try {
+            document.writeTo(new FileOutputStream(pdfFile));
+            Toast.makeText(getContext(), "PDF Exported", Toast.LENGTH_SHORT).show();
+            openPdf(pdfFile);
+        } catch (IOException e) {
+            Toast.makeText(getContext(), "Failed to save PDF", Toast.LENGTH_SHORT).show();
+        } finally {
+            document.close();
+        }
+    }
+
+    private void openPdf(File file) {
+        try {
+            Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".provider", file);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "No PDF viewer found", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ── NOTIFICATION & ALARM ──────────────────────────────────────────

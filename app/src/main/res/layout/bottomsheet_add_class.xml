@@ -39,31 +39,49 @@
     <!-- Topic -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:startIconDrawable="@drawable/baseline_info_24"
+        app:startIconTint="#94A3B8"
+        android:textColorHint="#49454F"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etTopic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Topic Name"
+
             android:textColor="@color/white" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Batch dropdown -->
-    <AutoCompleteTextView
-        android:id="@+id/dropBatch"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Select Batch"
-        android:textColor="@color/white"
-        android:textColorHint="#49454F" />
+        app:startIconDrawable="@drawable/baseline_group_24"
+        app:startIconTint="#94A3B8"
+        android:textColorHint="#49454F"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+
+        <AutoCompleteTextView
+            android:id="@+id/dropBatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Select Batch"
+            android:textColor="@color/white"
+            android:textColorHint="#49454F" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Date -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="12dp"
+        app:startIconDrawable="@drawable/outline_calendar_month_24"
+        app:startIconTint="#94A3B8"
+        android:textColorHint="#49454F"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDate"
@@ -81,6 +99,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        app:startIconDrawable="@drawable/baseline_autorenew_24"
+        app:startIconTint="#94A3B8"
         android:hint="Class Number (manual correction)"
         android:visibility="gone"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">

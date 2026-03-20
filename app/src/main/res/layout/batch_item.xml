@@ -10,208 +10,286 @@
     android:layout_marginHorizontal="4dp"
     android:backgroundTint="#1E293B">
 
-    <LinearLayout
-        android:padding="16dp"
-        android:orientation="vertical"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <LinearLayout
+            android:padding="16dp"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/tvBatchName"
-                android:text="Batch Name"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/tvBtnDetails"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Details"
-                android:textColor="#3B82F6"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:padding="8dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground"
-                android:layout_marginEnd="8dp"/>
-
-            <TextView
-                android:id="@+id/tvPayment"
-                android:text="৳ 0"
-                android:textColor="#4CAF50"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="6dp">
-
-            <TextView
-                android:id="@+id/tvBatchSubject"
-                android:text="Subject"
-                android:textColor="#94A3B8"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/tvEnrolledCount"
-                android:text="0 Students"
-                android:textColor="#3B82F6"
-                android:textSize="12sp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvBatchTime"
-            android:text="Time"
-            android:textColor="#94A3B8"
-            android:layout_marginTop="6dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/tvBatchDuration"
-            android:text="Duration"
-            android:textColor="#94A3B8"
-            android:layout_marginTop="4dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#2A3A50"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Classes taken / remaining row -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/tvClassesTaken"
-                    android:text="0"
-                    android:textColor="#5C6BC0"
-                    android:textSize="20sp"
+                    android:id="@+id/tvBatchName"
+                    android:text="Batch Name"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
                     android:textStyle="bold"
-                    android:gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
 
                 <TextView
-                    android:text="Taken"
-                    android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:gravity="center"
+                    android:id="@+id/tvBtnDetails"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="#2A3A50"/>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                    android:layout_height="wrap_content"
+                    android:text="Details"
+                    android:textColor="#3B82F6"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:layout_marginEnd="8dp"/>
 
                 <TextView
-                    android:id="@+id/tvClassesRemaining"
-                    android:text="0"
+                    android:id="@+id/tvPayment"
+                    android:text="৳ 0"
                     android:textColor="#4CAF50"
-                    android:textSize="20sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    android:gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp">
+
                 <TextView
-                    android:text="Remaining"
+                    android:id="@+id/tvBatchSubject"
+                    android:text="Subject"
                     android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:gravity="center"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:id="@+id/tvEnrolledCount"
+                    android:text="0 Students"
+                    android:textColor="#3B82F6"
+                    android:textSize="12sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvBatchTime"
+                    android:text="Time"
+                    android:textColor="#94A3B8"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:id="@+id/tvCycleCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cycle: 1"
+                    android:textColor="#FFB300"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_cycle_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvBatchDuration"
+                android:text="Duration"
+                android:textColor="#94A3B8"
+                android:layout_marginTop="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <!-- Divider -->
             <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="#2A3A50"/>
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#2A3A50"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Classes taken / remaining row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvClassesTaken"
+                        android:text="0"
+                        android:textColor="#5C6BC0"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="Taken"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#2A3A50"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvClassesRemaining"
+                        android:text="0"
+                        android:textColor="#4CAF50"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="Remaining"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#2A3A50"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvClassesTotal"
+                        android:text="0"
+                        android:textColor="#94A3B8"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="Total"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Cycle progress bar -->
+            <ProgressBar
+                android:id="@+id/progressCycle"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="10dp"
+                android:progressTint="#5C6BC0"
+                android:progressBackgroundTint="#2A3A50"
+                android:max="100"
+                android:progress="0"/>
+
+        </LinearLayout>
+
+        <!-- Overlay for Completed Batch -->
+        <LinearLayout
+            android:id="@+id/layoutBatchOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#E61E293B"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cycle Completed!"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"/>
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:gravity="center">
 
-                <TextView
-                    android:id="@+id/tvClassesTotal"
-                    android:text="0"
-                    android:textColor="#94A3B8"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartNewCycle"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="New Cycle"
+                    android:textSize="12sp"
+                    android:textAllCaps="false"
+                    app:cornerRadius="8dp"
+                    android:layout_marginEnd="8dp"/>
 
-                <TextView
-                    android:text="Total"
-                    android:textColor="#94A3B8"
-                    android:textSize="11sp"
-                    android:gravity="center"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCloseBatch"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="Close Batch"
+                    android:textSize="12sp"
+                    android:textAllCaps="false"
+                    android:textColor="#FF5252"
+                    app:strokeColor="#FF5252"
+                    app:cornerRadius="8dp"/>
+
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Cycle progress bar -->
-        <ProgressBar
-            android:id="@+id/progressCycle"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="6dp"
-            android:layout_marginTop="10dp"
-            android:progressTint="#5C6BC0"
-            android:progressBackgroundTint="#2A3A50"
-            android:max="100"
-            android:progress="0"/>
-
-    </LinearLayout>
+    </FrameLayout>
 
 </com.google.android.material.card.MaterialCardView>

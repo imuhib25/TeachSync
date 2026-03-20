@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -40,6 +41,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
@@ -58,12 +61,16 @@ public class StudentsActivity extends AppCompatActivity {
     TextInputEditText edtSearch;
     FirebaseFirestore db;
     private ImageButton backButton;
+    private MaterialButton btnViewArchived;
+    private TextView tvTitle;
     private LinearLayout layoutEmpty;
     String userID;
 
     private List<String> batchList = new ArrayList<>();
     private Map<String, String> batchIdMap = new HashMap<>();
     private AdView mAdView;
+    private boolean showingArchived = false;
+    private ListenerRegistration studentsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,8 @@ public class StudentsActivity extends AppCompatActivity {
         fab = findViewById(R.id.fabAddStudent);
         edtSearch = findViewById(R.id.edtSearch);
         backButton = findViewById(R.id.back_button);
+        btnViewArchived = findViewById(R.id.btnViewArchived);
+        tvTitle = findViewById(R.id.tvTitle);
         layoutEmpty = findViewById(R.id.layoutEmpty);
         mAuth = FirebaseAuth.getInstance();
         
@@ -93,12 +102,16 @@ public class StudentsActivity extends AppCompatActivity {
 
         // Initialize and load Banner Ad
         mAdView = findViewById(R.id.adView);
-        if (mAdView != null) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
+        AdManager.initAd(this, mAdView);
 
         backButton.setOnClickListener(v -> onBackPressed());
+
+        btnViewArchived.setOnClickListener(v -> {
+            showingArchived = !showingArchived;
+            btnViewArchived.setText(showingArchived ? "Active Students" : "Archived");
+            tvTitle.setText(showingArchived ? "Archived Students" : "Manage Students");
+            loadStudents();
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -127,11 +140,13 @@ public class StudentsActivity extends AppCompatActivity {
             WriteBatch deleteBatch = db.batch();
             deleteBatch.delete(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()));
 
-            for (String bName : deletedStudent.getBatches()) {
-                String bId = batchIdMap.get(bName);
-                if (bId != null) {
-                    deleteBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                            "enrolledCount", FieldValue.increment(-1));
+            if (deletedStudent.isActive()) {
+                for (String bName : deletedStudent.getBatches()) {
+                    String bId = batchIdMap.get(bName);
+                    if (bId != null) {
+                        deleteBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                                "enrolledCount", FieldValue.increment(-1));
+                    }
                 }
             }
 
@@ -147,11 +162,13 @@ public class StudentsActivity extends AppCompatActivity {
                             WriteBatch restoreBatch = db.batch();
                             restoreBatch.set(db.collection("users").document(userID).collection("students").document(deletedStudent.getId()), deletedStudent);
                             
-                            for (String bName : deletedStudent.getBatches()) {
-                                String bId = batchIdMap.get(bName);
-                                if (bId != null) {
-                                    restoreBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                                            "enrolledCount", FieldValue.increment(1));
+                            if (deletedStudent.isActive()) {
+                                for (String bName : deletedStudent.getBatches()) {
+                                    String bId = batchIdMap.get(bName);
+                                    if (bId != null) {
+                                        restoreBatch.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                                                "enrolledCount", FieldValue.increment(1));
+                                    }
                                 }
                             }
                             restoreBatch.commit().addOnSuccessListener(unused -> FinanceAutoGenerator.generateMonthlyInvoices(StudentsActivity.this, userID));
@@ -168,7 +185,10 @@ public class StudentsActivity extends AppCompatActivity {
     }
 
     private void loadStudents() {
-        db.collection("users").document(userID).collection("students")
+        if (studentsListener != null) studentsListener.remove();
+        
+        studentsListener = db.collection("users").document(userID).collection("students")
+                .whereEqualTo("active", !showingArchived)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Error loading students: ", error);
@@ -254,51 +274,61 @@ public class StudentsActivity extends AppCompatActivity {
             }
 
             // --- DUPLICATE CHECK ---
-            for (StudentModel s : studentList) {
-                if (!phone.isEmpty() && phone.equals(s.getPhone())) {
-                    Toast.makeText(this, "Student with this phone number already exists", Toast.LENGTH_SHORT).show();
-                    return;
+            // Checking all students (active and inactive) for duplicates
+            db.collection("users").document(userID).collection("students").get().addOnSuccessListener(snapshot -> {
+                for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                    String sPhone = doc.getString("phone");
+                    String sEmail = doc.getString("email");
+                    if (sPhone != null && !phone.isEmpty() && phone.equals(sPhone)) {
+                        Toast.makeText(this, "Student with this phone number already exists", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (sEmail != null && !email.isEmpty() && email.equalsIgnoreCase(sEmail)) {
+                        Toast.makeText(this, "Student with this email already exists", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                 }
-                if (!email.isEmpty() && email.equalsIgnoreCase(s.getEmail())) {
-                    Toast.makeText(this, "Student with this email already exists", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            btnSave.setEnabled(false);
-            
-            WriteBatch batch = db.batch();
-            String studentId = db.collection("users").document(userID).collection("students").document().getId();
-            
-            Map<String, Object> studentMap = new HashMap<>();
-            studentMap.put("name", name);
-            studentMap.put("batches", selectedBatches);
-            studentMap.put("email", email);
-            studentMap.put("phone", phone);
-            studentMap.put("parent", parent);
-            studentMap.put("createdAt", FieldValue.serverTimestamp());
-
-            batch.set(db.collection("users").document(userID).collection("students").document(studentId), studentMap);
-
-            for (String bName : selectedBatches) {
-                String bId = batchIdMap.get(bName);
-                if (bId != null) {
-                    batch.update(db.collection("users").document(userID).collection("batches").document(bId), 
-                            "enrolledCount", FieldValue.increment(1));
-                }
-            }
-
-            batch.commit().addOnSuccessListener(aVoid -> {
-                Toast.makeText(this, "Student Added Successfully", Toast.LENGTH_SHORT).show();
-                FinanceAutoGenerator.generateMonthlyInvoices(this, userID);
-                dialog.dismiss();
-            }).addOnFailureListener(e -> {
-                btnSave.setEnabled(true);
-                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                
+                performAddStudent(dialog, btnSave, name, email, phone, parent, selectedBatches);
             });
         });
 
         dialog.show();
+    }
+
+    private void performAddStudent(BottomSheetDialog dialog, MaterialButton btnSave, String name, String email, String phone, String parent, List<String> selectedBatches) {
+        btnSave.setEnabled(false);
+        
+        WriteBatch batch = db.batch();
+        String studentId = db.collection("users").document(userID).collection("students").document().getId();
+        
+        Map<String, Object> studentMap = new HashMap<>();
+        studentMap.put("name", name);
+        studentMap.put("batches", selectedBatches);
+        studentMap.put("email", email);
+        studentMap.put("phone", phone);
+        studentMap.put("parent", parent);
+        studentMap.put("active", true); // Default to true when adding
+        studentMap.put("createdAt", FieldValue.serverTimestamp());
+
+        batch.set(db.collection("users").document(userID).collection("students").document(studentId), studentMap);
+
+        for (String bName : selectedBatches) {
+            String bId = batchIdMap.get(bName);
+            if (bId != null) {
+                batch.update(db.collection("users").document(userID).collection("batches").document(bId), 
+                        "enrolledCount", FieldValue.increment(1));
+            }
+        }
+
+        batch.commit().addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "Student Added Successfully", Toast.LENGTH_SHORT).show();
+            FinanceAutoGenerator.generateMonthlyInvoices(this, userID);
+            dialog.dismiss();
+        }).addOnFailureListener(e -> {
+            btnSave.setEnabled(true);
+            Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void refreshChips(ChipGroup chipGroup, List<String> selectedBatches) {
@@ -350,5 +380,6 @@ public class StudentsActivity extends AppCompatActivity {
             mAdView.destroy();
         }
         super.onDestroy();
+        if (studentsListener != null) studentsListener.remove();
     }
 }

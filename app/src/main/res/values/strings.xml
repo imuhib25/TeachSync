@@ -63,6 +63,7 @@
     <string name="theme">Theme</string>
     <string name="currency">Currency</string>
     <string name="logout">Logout</string>
+    <string name="remove_ads">Remove Ads</string>
 
     <string name="english">English</string>
     <string name="bengali">Bengali</string>
@@ -70,4 +71,9 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="choose_language">Choose Language</string>
+
+    <string name="attendance_present">P</string>
+    <string name="attendance_absent">A</string>
+    <string name="attendance_late">L</string>
+    <string name="attendance_leave">LV</string>
 </resources>

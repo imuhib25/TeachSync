@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -16,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
@@ -34,6 +36,8 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     public interface OnBatchClickListener {
         void onBatchClick(BatchModel batch);
         void onInfoClick(BatchModel batch);
+        void onStartNewCycle(BatchModel batch);
+        void onCloseBatch(BatchModel batch);
     }
 
     public BatchAdapter(Context context,
@@ -72,6 +76,9 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         
         holder.tvPayment.setText("৳ " + (int)batch.getPaymentPerStudent());
 
+        // Cycle Count
+        holder.tvCycleCount.setText("Cycle: " + batch.getCycleCount());
+
         // ── Taken / Remaining / Total ─────────────────────────────────────
         int total   = batch.getTotalMonthlyClasses();
         int taken   = batch.getCurrentMonthCount();
@@ -93,6 +100,21 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         } else {
             holder.tvRemaining.setTextColor(Color.parseColor("#4CAF50")); // green = ok
         }
+
+        // ── Overlay handling ──────────────────────────────────────────────
+        if (total > 0 && taken >= total && !batch.isArchived()) {
+            holder.layoutOverlay.setVisibility(View.VISIBLE);
+        } else {
+            holder.layoutOverlay.setVisibility(View.GONE);
+        }
+
+        holder.btnStartNewCycle.setOnClickListener(v -> {
+            if (listener != null) listener.onStartNewCycle(batch);
+        });
+
+        holder.btnCloseBatch.setOnClickListener(v -> {
+            if (listener != null) listener.onCloseBatch(batch);
+        });
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onBatchClick(batch);
@@ -221,23 +243,29 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     // ── ViewHolder ────────────────────────────────────────────────────────
     public static class BatchViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvName, tvSubject, tvTime, tvDuration, tvPayment, tvEnrolledCount, tvBtnDetails;
+        TextView tvName, tvSubject, tvTime, tvDuration, tvPayment, tvEnrolledCount, tvBtnDetails, tvCycleCount;
         TextView tvTaken, tvRemaining, tvTotal;
         ProgressBar progressCycle;
+        LinearLayout layoutOverlay;
+        MaterialButton btnStartNewCycle, btnCloseBatch;
 
         public BatchViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvName        = itemView.findViewById(R.id.tvBatchName);
-            tvSubject     = itemView.findViewById(R.id.tvBatchSubject);
+            tvName          = itemView.findViewById(R.id.tvBatchName);
+            tvSubject       = itemView.findViewById(R.id.tvBatchSubject);
             tvEnrolledCount = itemView.findViewById(R.id.tvEnrolledCount);
-            tvTime        = itemView.findViewById(R.id.tvBatchTime);
-            tvDuration    = itemView.findViewById(R.id.tvBatchDuration);
-            tvPayment     = itemView.findViewById(R.id.tvPayment);
-            tvTaken       = itemView.findViewById(R.id.tvClassesTaken);
-            tvRemaining   = itemView.findViewById(R.id.tvClassesRemaining);
-            tvTotal       = itemView.findViewById(R.id.tvClassesTotal);
-            tvBtnDetails  = itemView.findViewById(R.id.tvBtnDetails);
-            progressCycle = itemView.findViewById(R.id.progressCycle);
+            tvTime          = itemView.findViewById(R.id.tvBatchTime);
+            tvDuration      = itemView.findViewById(R.id.tvBatchDuration);
+            tvPayment       = itemView.findViewById(R.id.tvPayment);
+            tvCycleCount    = itemView.findViewById(R.id.tvCycleCount);
+            tvTaken         = itemView.findViewById(R.id.tvClassesTaken);
+            tvRemaining     = itemView.findViewById(R.id.tvClassesRemaining);
+            tvTotal         = itemView.findViewById(R.id.tvClassesTotal);
+            tvBtnDetails    = itemView.findViewById(R.id.tvBtnDetails);
+            progressCycle   = itemView.findViewById(R.id.progressCycle);
+            layoutOverlay   = itemView.findViewById(R.id.layoutBatchOverlay);
+            btnStartNewCycle = itemView.findViewById(R.id.btnStartNewCycle);
+            btnCloseBatch    = itemView.findViewById(R.id.btnCloseBatch);
         }
     }
 }

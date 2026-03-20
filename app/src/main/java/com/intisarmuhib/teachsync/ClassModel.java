@@ -1,6 +1,8 @@
 package com.intisarmuhib.teachsync;
 
 import com.google.firebase.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClassModel {
 
@@ -20,6 +22,12 @@ public class ClassModel {
     
     // Status: "scheduled", "completed", "postponed", "rescheduled"
     private String status = "scheduled";
+
+    // Attendance map: studentId -> status (e.g., "Present", "Absent", "Late", "Leave")
+    private Map<String, String> attendance = new HashMap<>();
+
+    // Homework section
+    private String homework;
 
     public ClassModel() {}
 
@@ -54,6 +62,8 @@ public class ClassModel {
     public int getTotalInCycle() { return totalInCycle; }
     public Timestamp getCreatedAt() { return createdAt; }
     public String getStatus() { return status; }
+    public Map<String, String> getAttendance() { return attendance; }
+    public String getHomework() { return homework; }
 
     // Setters (all required for Firestore toObject() deserialization)
     public void setId(String id) { this.id = id; }
@@ -68,4 +78,6 @@ public class ClassModel {
     public void setTotalInCycle(int totalInCycle) { this.totalInCycle = totalInCycle; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setStatus(String status) { this.status = status; }
+    public void setAttendance(Map<String, String> attendance) { this.attendance = attendance; }
+    public void setHomework(String homework) { this.homework = homework; }
 }

@@ -72,12 +72,41 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
+        <!-- HW Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
+            android:background="#1AFFFFFF"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HW: "
+                android:textColor="#FFD54F"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvHomework"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="N/A"
+                android:textColor="#E0E0E0"
+                android:textSize="12sp"
+                android:ellipsize="end"
+                android:maxLines="2"/>
+        </LinearLayout>
+
         <!-- Row: Class number + Remaining -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical">
 
             <TextView
@@ -103,15 +132,36 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvExtra"
-            android:text="Extra Class"
-            android:textColor="#FF5252"
-            android:textSize="12sp"
-            android:layout_marginTop="6dp"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="6dp">
+
+            <TextView
+                android:id="@+id/tvExtra"
+                android:text="Extra Class"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/btnAttendance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attendance"
+                android:textColor="#3B82F6"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+        </LinearLayout>
 
     </LinearLayout>
 

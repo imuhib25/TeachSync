@@ -1,5 +1,6 @@
 package com.intisarmuhib.teachsync;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -22,12 +23,16 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -36,10 +41,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -78,6 +85,7 @@ public class BatchesActivity extends AppCompatActivity {
     private String userId;
 
     private ImageButton backButton;
+    private MaterialButton btnViewArchived;
     private ListenerRegistration batchesListener;
 
     private int startHour = -1, startMinute = -1;
@@ -91,15 +99,24 @@ public class BatchesActivity extends AppCompatActivity {
 
     private LinearLayout layoutEmpty;
     private AdView mAdView;
+    private boolean showingArchived = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
         setContentView(R.layout.activity_batches);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         recyclerView = findViewById(R.id.recyclerViewBatch);
         fabAdd       = findViewById(R.id.fabAddBatch);
         backButton   = findViewById(R.id.back_button);
+        btnViewArchived = findViewById(R.id.btnViewArchived);
         layoutEmpty  = findViewById(R.id.layoutEmpty);
 
         db = FirebaseFirestore.getInstance();
@@ -115,10 +132,7 @@ public class BatchesActivity extends AppCompatActivity {
 
         // Initialize and load Banner Ad
         mAdView = findViewById(R.id.adView);
-        if (mAdView != null) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
+        AdManager.initAd(this, mAdView);
 
         batchList = new ArrayList<>();
         adapter   = new BatchAdapter(this, batchList, new BatchAdapter.OnBatchClickListener() {
@@ -131,12 +145,29 @@ public class BatchesActivity extends AppCompatActivity {
             public void onInfoClick(BatchModel batch) {
                 showBatchInfoDialog(batch);
             }
+
+            @Override
+            public void onStartNewCycle(BatchModel batch) {
+                handleStartNewCycle(batch);
+            }
+
+            @Override
+            public void onCloseBatch(BatchModel batch) {
+                handleCloseBatch(batch);
+            }
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
         backButton.setOnClickListener(v -> onBackPressed());
+        
+        btnViewArchived.setOnClickListener(v -> {
+            showingArchived = !showingArchived;
+            btnViewArchived.setText(showingArchived ? "Active Batches" : "Archived");
+            ((TextView)findViewById(R.id.tvTitle)).setText(showingArchived ? "Archived Batches" : "Manage Batches");
+            loadBatches();
+        });
 
         BatchAdapter.attachSwipeToDelete(recyclerView, position -> {
             if (position == RecyclerView.NO_POSITION) return;
@@ -166,6 +197,125 @@ public class BatchesActivity extends AppCompatActivity {
 
         fabAdd.setOnClickListener(v -> showBatchDialog(null));
         setupSearch();
+    }
+
+    private void handleStartNewCycle(BatchModel batch) {
+        if (batch.isAutoSchedule()) {
+            startAutoCycle(batch);
+        } else {
+            showManualCycleCalendar(batch);
+        }
+    }
+
+    private void startAutoCycle(BatchModel batch) {
+        WriteBatch writeBatch = db.batch();
+        int newCycle = batch.getCycleCount() + 1;
+        
+        DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batch.getId());
+        writeBatch.update(batchRef, "cycleCount", newCycle, "currentMonthCount", 0);
+
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        String timeRange = timeFmt.format(batch.getStartTime().toDate()) + " - " + timeFmt.format(batch.getEndTime().toDate());
+
+        List<Integer> selectedDays = batch.getSelectedDays();
+        int classesAddedCount = 0;
+        for (int i = 0; i < 60 && classesAddedCount < batch.getTotalMonthlyClasses(); i++) {
+            if (selectedDays.contains(cal.get(Calendar.DAY_OF_WEEK))) {
+                classesAddedCount++;
+                String classId = db.collection("users").document(userId).collection("classes").document().getId();
+                ClassModel classModel = new ClassModel(
+                        classId,
+                        "New Cycle Class",
+                        batch.getName(),
+                        batch.getId(),
+                        timeRange,
+                        dateFormat.format(cal.getTime()),
+                        String.valueOf(classesAddedCount),
+                        false,
+                        newCycle,
+                        batch.getTotalMonthlyClasses(),
+                        new Timestamp(Calendar.getInstance().getTime())
+                );
+                writeBatch.set(db.collection("users").document(userId).collection("classes").document(classId), classModel);
+            }
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        writeBatch.commit().addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "New cycle started for " + batch.getName(), Toast.LENGTH_SHORT).show();
+            FinanceAutoGenerator.generateMonthlyInvoices(this, userId);
+        });
+    }
+
+    private void showManualCycleCalendar(BatchModel batch) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_manual_cycle_calendar);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        MaterialCalendarView calendarView = dialog.findViewById(R.id.calendarManualCycle);
+        calendarView.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
+        TextView tvLimit = dialog.findViewById(R.id.tvCycleLimit);
+        tvLimit.setText("Select exactly " + batch.getTotalMonthlyClasses() + " dates");
+
+        dialog.findViewById(R.id.btnConfirmCycle).setOnClickListener(v -> {
+            List<CalendarDay> selectedDates = calendarView.getSelectedDates();
+            if (selectedDates.size() != batch.getTotalMonthlyClasses()) {
+                Toast.makeText(this, "Please select exactly " + batch.getTotalMonthlyClasses() + " dates", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            WriteBatch writeBatch = db.batch();
+            int newCycle = batch.getCycleCount() + 1;
+            
+            DocumentReference batchRef = db.collection("users").document(userId).collection("batches").document(batch.getId());
+            
+            List<Timestamp> tsList = new ArrayList<>();
+            for (CalendarDay d : selectedDates) tsList.add(new Timestamp(d.getDate()));
+            
+            writeBatch.update(batchRef, "cycleCount", newCycle, "currentMonthCount", 0, "manualDates", tsList);
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+            SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+            String timeRange = timeFmt.format(batch.getStartTime().toDate()) + " - " + timeFmt.format(batch.getEndTime().toDate());
+
+            int count = 0;
+            for (CalendarDay day : selectedDates) {
+                count++;
+                String classId = db.collection("users").document(userId).collection("classes").document().getId();
+                ClassModel classModel = new ClassModel(
+                        classId,
+                        "Initial Class",
+                        batch.getName(),
+                        batch.getId(),
+                        timeRange,
+                        dateFormat.format(day.getDate()),
+                        String.valueOf(count),
+                        false,
+                        newCycle,
+                        batch.getTotalMonthlyClasses(),
+                        new Timestamp(Calendar.getInstance().getTime())
+                );
+                writeBatch.set(db.collection("users").document(userId).collection("classes").document(classId), classModel);
+            }
+
+            writeBatch.commit().addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "New cycle started for " + batch.getName(), Toast.LENGTH_SHORT).show();
+                FinanceAutoGenerator.generateMonthlyInvoices(this, userId);
+                dialog.dismiss();
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void handleCloseBatch(BatchModel batch) {
+        db.collection("users").document(userId).collection("batches").document(batch.getId())
+                .update("archived", true)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, batch.getName() + " archived", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void updateNoDataVisibility() {
@@ -422,8 +572,11 @@ public class BatchesActivity extends AppCompatActivity {
     }
 
     private void loadBatches() {
+        if (batchesListener != null) batchesListener.remove();
+        
         batchesListener = db.collection("users").document(userId)
                 .collection("batches")
+                .whereEqualTo("archived", showingArchived)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e("Batches", error.getMessage());
@@ -492,6 +645,30 @@ public class BatchesActivity extends AppCompatActivity {
         for (int i = 1; i <= 31; i++) numbers.add(String.valueOf(i));
         etMonthly.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, numbers));
+
+        calendarManual.setOnDateChangedListener((widget, date, selected) -> {
+            String monthlyStr = etMonthly.getText().toString().trim();
+            if (monthlyStr.isEmpty()) {
+                if (selected) {
+                    widget.setDateSelected(date, false);
+                    Toast.makeText(this, "Please select monthly classes number first", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            int limit = Integer.parseInt(monthlyStr);
+            if (selected && widget.getSelectedDates().size() > limit) {
+                widget.setDateSelected(date, false);
+                Toast.makeText(this, "You can only select up to " + limit + " dates", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        etMonthly.setOnItemClickListener((parent, view1, position, id) -> {
+            int newLimit = Integer.parseInt(numbers.get(position));
+            if (calendarManual.getSelectedDates().size() > newLimit) {
+                Toast.makeText(this, "Number of selected dates exceeds new monthly class limit. Please adjust.", Toast.LENGTH_LONG).show();
+            }
+        });
 
         radioGroupSchedule.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioAuto) {
@@ -609,6 +786,10 @@ public class BatchesActivity extends AppCompatActivity {
             } else {
                 if (selectedDates == null || selectedDates.isEmpty()) {
                     Toast.makeText(this, "Please select at least one date", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (selectedDates.size() != totalMonthlyClasses) {
+                    Toast.makeText(this, "Please select exactly " + totalMonthlyClasses + " dates as specified in monthly classes", Toast.LENGTH_LONG).show();
                     return;
                 }
             }

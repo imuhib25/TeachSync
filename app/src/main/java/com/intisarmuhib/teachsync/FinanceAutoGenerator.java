@@ -49,11 +49,11 @@ public class FinanceAutoGenerator {
         Tasks.whenAllSuccess(
                 db.collection("users").document(userId).collection("batches").get(),
                 db.collection("users").document(userId).collection("students").get(),
-                db.collection("users").document(userId).collection("invoices").whereEqualTo("month", currentMonthTs).get()
+                db.collection("users").document(userId).collection("invoices").get()
         ).addOnSuccessListener(results -> {
             List<DocumentSnapshot> batchDocs = ((QuerySnapshot) results.get(0)).getDocuments();
             List<DocumentSnapshot> studentDocs = ((QuerySnapshot) results.get(1)).getDocuments();
-            List<DocumentSnapshot> invoiceDocs = ((QuerySnapshot) results.get(2)).getDocuments();
+            List<DocumentSnapshot> allInvoiceDocs = ((QuerySnapshot) results.get(2)).getDocuments();
 
             if (batchDocs.isEmpty() || studentDocs.isEmpty()) {
                 Log.d(TAG, "No batches or students found. Sync aborted.");
@@ -72,15 +72,28 @@ public class FinanceAutoGenerator {
                 }
             }
 
-            // Track existing invoices to avoid duplicates
+            // Track existing invoices to avoid duplicates and handle overdue status
             Set<String> existingInvoiceKeys = new HashSet<>();
-            for (DocumentSnapshot doc : invoiceDocs) {
-                existingInvoiceKeys.add(doc.getId());
-            }
-
             WriteBatch writeBatch = db.batch();
-            boolean hasNewInvoices = false;
+            boolean hasChanges = false;
             final int[] newInvoiceCount = {0};
+
+            for (DocumentSnapshot doc : allInvoiceDocs) {
+                InvoiceModel inv = doc.toObject(InvoiceModel.class);
+                if (inv != null) {
+                    existingInvoiceKeys.add(doc.getId());
+                    
+                    // Mark previous months' due invoices as Overdue
+                    if (inv.getMonth() != null && "Due".equals(inv.getStatus())) {
+                        Calendar invMonth = Calendar.getInstance();
+                        invMonth.setTime(inv.getMonth().toDate());
+                        if (invMonth.before(cal)) {
+                            writeBatch.update(doc.getReference(), "status", "Overdue");
+                            hasChanges = true;
+                        }
+                    }
+                }
+            }
 
             for (DocumentSnapshot studentDoc : studentDocs) {
                 StudentModel student = studentDoc.toObject(StudentModel.class);
@@ -98,28 +111,30 @@ public class FinanceAutoGenerator {
                         String bId = bDoc.getId();
                         Double fee = bDoc.getDouble("paymentPerStudent");
                         if (fee == null) fee = 0.0;
+                        
+                        int cycleCount = bDoc.getLong("cycleCount") != null ? bDoc.getLong("cycleCount").intValue() : 1;
 
-                        // Composite key ensures uniqueness per student, per batch, per month
-                        String invoiceId = monthId + "_" + bId + "_" + student.getId();
+                        // Composite key ensures uniqueness per student, per batch, per month, per cycle
+                        String invoiceId = monthId + "_c" + cycleCount + "_" + bId + "_" + student.getId();
 
                         if (!existingInvoiceKeys.contains(invoiceId)) {
                             InvoiceModel invoice = new InvoiceModel(
                                     invoiceId, student.getId(), student.getName(), bId, bName,
-                                    fee, 0, "Due", currentMonthTs, Timestamp.now());
+                                    fee, 0, "Due", currentMonthTs, Timestamp.now(), cycleCount);
 
                             writeBatch.set(db.collection("users").document(userId)
                                     .collection("invoices").document(invoiceId), invoice);
                             
-                            hasNewInvoices = true;
+                            hasChanges = true;
                             newInvoiceCount[0]++;
-                            existingInvoiceKeys.add(invoiceId); // Prevent duplicate if student is twice in name query (unlikely)
+                            existingInvoiceKeys.add(invoiceId);
                             Log.d(TAG, "Queued invoice: " + invoiceId + " for " + student.getName() + " in " + bName);
                         }
                     }
                 }
             }
 
-            if (hasNewInvoices) {
+            if (hasChanges) {
                 writeBatch.commit().addOnSuccessListener(aVoid -> 
                     Log.d(TAG, "Sync complete. Generated " + newInvoiceCount[0] + " new invoices."));
             } else {

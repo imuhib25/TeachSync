@@ -33,6 +33,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     private List<ClassModel> list = new ArrayList<>();
     private OnStatusUpdateListener statusListener;
     private OnItemClickListener editListener;
+    private OnAttendanceClickListener attendanceListener;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -52,12 +53,20 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         void onStatusUpdate(ClassModel model, String oldStatus, String newStatus);
     }
 
+    public interface OnAttendanceClickListener {
+        void onAttendanceClick(ClassModel model);
+    }
+
     public void setListener(OnItemClickListener listener) {
         this.editListener = listener;
     }
 
     public void setStatusUpdateListener(OnStatusUpdateListener listener) {
         this.statusListener = listener;
+    }
+
+    public void setAttendanceListener(OnAttendanceClickListener listener) {
+        this.attendanceListener = listener;
     }
 
     @Override
@@ -109,6 +118,10 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         holder.tvTopic.setText(model.getTopic() != null ? model.getTopic() : "");
         holder.tvBatch.setText("Batch: " + (model.getBatch() != null ? model.getBatch() : ""));
         holder.tvClassTime.setText(model.getClassTime() != null ? model.getClassTime() : "");
+        
+        // Homework
+        String hw = model.getHomework();
+        holder.tvHomework.setText((hw == null || hw.trim().isEmpty()) ? "N/A" : hw);
 
         // ── Monthly Number & Progress ───────────────────────────────────
         if (model.isExtra()) {
@@ -173,16 +186,20 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
         }
 
         // ── Button Listeners ────────────────────────────────────────────
-        holder.btnMarkCompleted.setOnClickListener(v -> updateStatus(model, "completed"));
-        holder.btnMarkPostponed.setOnClickListener(v -> updateStatus(model, "postponed"));
-        holder.btnMarkRescheduled.setOnClickListener(v -> updateStatus(model, "rescheduled"));
+        holder.btnMarkCompleted.setOnClickListener(v -> updateStatus(holder.itemView, model, "completed"));
+        holder.btnMarkPostponed.setOnClickListener(v -> updateStatus(holder.itemView, model, "postponed"));
+        holder.btnMarkRescheduled.setOnClickListener(v -> updateStatus(holder.itemView, model, "rescheduled"));
+
+        holder.btnAttendance.setOnClickListener(v -> {
+            if (attendanceListener != null) attendanceListener.onAttendanceClick(model);
+        });
 
         holder.itemView.setOnClickListener(v -> {
             if (editListener != null) editListener.onEdit(model);
         });
     }
 
-    private void updateStatus(ClassModel model, String newStatus) {
+    private void updateStatus(View view, ClassModel model, String newStatus) {
         String oldStatus = model.getStatus();
         if (newStatus.equals(oldStatus)) return;
 
@@ -253,7 +270,7 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTopic, tvBatch, tvMonthlyNumber, tvExtra, tvClassTime, tvOnGoing, tvRemaining, tvStatusBadge, tvOverlayStatus;
+        TextView tvTopic, tvBatch, tvMonthlyNumber, tvExtra, tvClassTime, tvOnGoing, tvRemaining, tvStatusBadge, tvOverlayStatus, btnAttendance, tvHomework;
         LinearLayout layoutCompletedOverlay, layoutConfirmationOverlay;
         Button btnMarkCompleted, btnMarkPostponed, btnMarkRescheduled;
 
@@ -268,6 +285,8 @@ public class ClassAdapter extends RecyclerView.Adapter<ClassAdapter.ViewHolder> 
             tvStatusBadge   = itemView.findViewById(R.id.tvStatusBadge);
             tvRemaining     = itemView.findViewById(R.id.tvRemaining);
             tvOverlayStatus = itemView.findViewById(R.id.tvOverlayStatus);
+            btnAttendance   = itemView.findViewById(R.id.btnAttendance);
+            tvHomework      = itemView.findViewById(R.id.tvHomework);
             layoutCompletedOverlay = itemView.findViewById(R.id.layoutCompletedOverlay);
             layoutConfirmationOverlay = itemView.findViewById(R.id.layoutConfirmationOverlay);
             btnMarkCompleted = itemView.findViewById(R.id.btnMarkCompleted);

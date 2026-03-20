@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="8dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/tvStudentName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Student Name"
+        android:textColor="@color/white"
+        android:textSize="14sp" />
+
+    <RadioGroup
+        android:id="@+id/rgAttendance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbPresent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/attendance_present"
+            android:textColor="@color/white"
+            android:buttonTint="#4CAF50"
+            android:textSize="12sp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="4dp"/>
+
+        <RadioButton
+            android:id="@+id/rbAbsent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/attendance_absent"
+            android:textColor="@color/white"
+            android:buttonTint="#F44336"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="4dp"/>
+
+        <RadioButton
+            android:id="@+id/rbLate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/attendance_late"
+            android:textColor="@color/white"
+            android:buttonTint="#FF9800"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="4dp"/>
+
+        <RadioButton
+            android:id="@+id/rbLeave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/attendance_leave"
+            android:textColor="@color/white"
+            android:buttonTint="#2196F3"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="4dp"/>
+
+    </RadioGroup>
+
+</LinearLayout>

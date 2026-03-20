@@ -20,29 +20,43 @@
             android:padding="20dp"
             android:orientation="vertical">
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/TopLayout"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
                 <ImageButton
                     android:id="@+id/back_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/baseline_arrow_back_ios_24"
-                    android:layout_marginTop="8dp"
                     android:background="#0B1020"
                     app:tint="@color/white" />
                 <TextView
+                    android:id="@+id/tvTitle"
                     android:text="Students"
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="@android:color/white"
                     android:fontFamily="@font/lexend_bold"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewArchived"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="Archived"
+                    android:textAllCaps="false"
+                    android:textColor="#3B82F6"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/lexend_medium"/>
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvSubtitle"
                 android:text="Manage enrolled students"
                 android:textSize="14sp"
                 android:textColor="#A0A8C0"

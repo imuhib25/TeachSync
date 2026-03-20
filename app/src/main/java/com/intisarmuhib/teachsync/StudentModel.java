@@ -11,6 +11,7 @@ public class StudentModel {
     private List<String> batches; 
     private String parent;
     private String id;
+    private boolean active = true; // Default to active
 
     public StudentModel() {
         // Required for Firebase
@@ -23,6 +24,7 @@ public class StudentModel {
         this.email = email;
         this.phone = phone;
         this.batches = batches != null ? batches : new ArrayList<>();
+        this.active = true;
     }
 
     public String getName() { return name; }
@@ -42,6 +44,9 @@ public class StudentModel {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public String getBatchesDisplay() {
         if (batches == null || batches.isEmpty()) return "No Batch";

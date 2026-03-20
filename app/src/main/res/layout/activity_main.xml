@@ -36,6 +36,7 @@
         android:background="#111833"
         app:itemIconTint="#7F8CFF"
         app:itemTextColor="#7F8CFF"
+        android:fitsSystemWindows="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

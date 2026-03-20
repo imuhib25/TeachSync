@@ -146,6 +146,8 @@ if(!mTermsCheck.isChecked()){
                                     user.put("fName",fullName);
                                     user.put("email",email);
                                     user.put("phone",phone);
+                                    user.put("promocode", "");
+                                    user.put("ads_removed", false);
                                     user.put("dateofjoin",date);
                                     documentReference.set(user);
                                     mProgressBar.setVisibility(View.GONE);

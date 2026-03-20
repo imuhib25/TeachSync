@@ -15,10 +15,16 @@ public class BatchFinanceAdapter extends RecyclerView.Adapter<BatchFinanceAdapte
 
     private final List<BatchFinanceModel> list;
     private final String currencySymbol;
+    private final OnBatchClickListener listener;
 
-    public BatchFinanceAdapter(List<BatchFinanceModel> list, String currencySymbol) {
+    public interface OnBatchClickListener {
+        void onBatchClick(BatchFinanceModel model);
+    }
+
+    public BatchFinanceAdapter(List<BatchFinanceModel> list, String currencySymbol, OnBatchClickListener listener) {
         this.list = list;
         this.currencySymbol = currencySymbol;
+        this.listener = listener;
     }
 
     @NonNull
@@ -36,7 +42,20 @@ public class BatchFinanceAdapter extends RecyclerView.Adapter<BatchFinanceAdapte
         holder.tvCollected.setText(currencySymbol + " " + (int)model.getCollectedAmount());
         holder.tvDue.setText("Due: " + currencySymbol + (int)model.getDueAmount());
         holder.tvStudentCount.setText(model.getStudentCount() + " Students");
+        holder.tvCycleCount.setText("Cycle-" + model.getCycleCount());
         holder.progressBar.setProgress(model.getProgress());
+
+        if (model.getDueAmount() <= 0 && model.getCollectedAmount() > 0) {
+            holder.layoutCompletedOverlay.setVisibility(View.VISIBLE);
+        } else {
+            holder.layoutCompletedOverlay.setVisibility(View.GONE);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onBatchClick(model);
+            }
+        });
     }
 
     @Override
@@ -45,8 +64,9 @@ public class BatchFinanceAdapter extends RecyclerView.Adapter<BatchFinanceAdapte
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvBatchName, tvCollected, tvDue, tvStudentCount;
+        TextView tvBatchName, tvCollected, tvDue, tvStudentCount, tvCycleCount;
         ProgressBar progressBar;
+        View layoutCompletedOverlay;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -54,7 +74,9 @@ public class BatchFinanceAdapter extends RecyclerView.Adapter<BatchFinanceAdapte
             tvCollected = itemView.findViewById(R.id.tvCollectedAmount);
             tvDue = itemView.findViewById(R.id.tvDueAmount);
             tvStudentCount = itemView.findViewById(R.id.tvStudentCount);
+            tvCycleCount = itemView.findViewById(R.id.tvCycleCount);
             progressBar = itemView.findViewById(R.id.progressBatchCollection);
+            layoutCompletedOverlay = itemView.findViewById(R.id.layoutCompletedOverlay);
         }
     }
 }

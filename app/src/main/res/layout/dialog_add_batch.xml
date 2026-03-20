@@ -21,14 +21,27 @@
             android:textColor="@color/white"
             android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/etBatchName"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:hint="Batch Name"
-            android:textColor="@color/white"
-            android:textColorHint="#94A3B8" />
+            app:startIconDrawable="@drawable/baseline_group_24"
+            app:startIconTint="#94A3B8"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:hintEnabled="false"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBatchName"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Batch Name"
+                android:paddingStart="40dp"
+                android:textColor="@color/white"
+                android:textColorHint="#94A3B8" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Subject Dropdown -->
         <com.google.android.material.textfield.TextInputLayout
@@ -38,6 +51,8 @@
             android:layout_marginBottom="12dp"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
+            app:startIconDrawable="@drawable/outline_book_24"
+            app:startIconTint="#94A3B8"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
             <AutoCompleteTextView
@@ -58,6 +73,8 @@
             android:hint="Total Monthly Classes"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
+            app:startIconDrawable="@drawable/baseline_autorenew_24"
+            app:startIconTint="#94A3B8"
             android:layout_marginTop="12dp">
 
             <AutoCompleteTextView
@@ -75,6 +92,8 @@
             android:hint="Payment Per Student"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
+            app:startIconDrawable="@drawable/baseline_payments_24"
+            app:startIconTint="#94A3B8"
             android:layout_marginTop="12dp"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
@@ -93,6 +112,8 @@
             android:hint="Max Capacity (0 for unlimited)"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
+            app:startIconDrawable="@drawable/baseline_group_24"
+            app:startIconTint="#94A3B8"
             android:layout_marginTop="12dp"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
@@ -112,9 +133,8 @@
             android:layout_marginBottom="12dp"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
-            app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_clock"
-            app:endIconContentDescription="Select Start Time">
+            app:startIconDrawable="@drawable/ic_clock"
+            app:startIconTint="#94A3B8">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etStartTime"
@@ -135,9 +155,8 @@
             android:layout_marginBottom="20dp"
             android:textColorHint="#94A3B8"
             app:hintTextColor="#3B82F6"
-            app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_clock"
-            app:endIconContentDescription="Select End Time">
+            app:startIconDrawable="@drawable/ic_clock"
+            app:startIconTint="#94A3B8">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEndTime"

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="20dp"
+    app:cardBackgroundColor="#1A2140"
+    app:strokeWidth="1dp"
+    app:strokeColor="#26304D"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="8dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvBatchName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Batch Alpha"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/lexend_bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <TextView
+                    android:id="@+id/tvCycleCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="C: 1"
+                    android:textColor="#FFB300"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_cycle_badge"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:layout_marginStart="4dp"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvBatchSubject"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Physics"
+                android:textColor="#A0A8C0"
+                android:textSize="13sp"
+                android:fontFamily="@font/lexend"
+                android:layout_marginTop="2dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#26304D"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/baseline_group_24"
+                    app:tint="#3B82F6"/>
+
+                <TextView
+                    android:id="@+id/tvStudentCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="15 Students"
+                    android:textColor="#DADFFF"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/lexend"
+                    android:layout_marginStart="6dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="6dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_clock"
+                    app:tint="#00E676"/>
+
+                <TextView
+                    android:id="@+id/tvBatchTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="04:00 PM"
+                    android:textColor="#DADFFF"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/lexend"
+                    android:layout_marginStart="6dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="6dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/outline_book_24"
+                    app:tint="#FFB74D"/>
+
+                <TextView
+                    android:id="@+id/tvClassProgress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Taken: 0/0"
+                    android:textColor="#DADFFF"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/lexend"
+                    android:layout_marginStart="6dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Overlay for Completed Batch -->
+        <LinearLayout
+            android:id="@+id/layoutBatchOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#E61A2140"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cycle Completed!"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartNewCycle"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:padding="0dp"
+                android:text="New Cycle"
+                android:textSize="10sp"
+                android:textAllCaps="false"
+                app:cornerRadius="6dp"
+                android:layout_marginBottom="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCloseBatch"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:padding="0dp"
+                android:text="Close Batch"
+                android:textSize="10sp"
+                android:textAllCaps="false"
+                android:textColor="#FF5252"
+                app:strokeColor="#FF5252"
+                app:cornerRadius="6dp"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</com.google.android.material.card.MaterialCardView>

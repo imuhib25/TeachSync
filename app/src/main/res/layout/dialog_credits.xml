@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_dialog"
@@ -48,6 +49,26 @@
         android:text="Intisar Muhib"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="@font/lexend_medium"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="QA Analyst"
+        android:textColor="#7E89B0"
+        android:textSize="12sp"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/lexend"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Abdullah Bhuiya"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
         android:layout_marginBottom="4dp"
         android:fontFamily="@font/lexend_medium"/>
 
@@ -70,7 +91,6 @@
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
         android:backgroundTint="#5667FF"
-        app:cornerRadius="12dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        app:cornerRadius="12dp" />
 
 </LinearLayout>

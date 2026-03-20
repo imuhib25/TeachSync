@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="24dp"
+    app:cardBackgroundColor="#1A2140">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Class Dates"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/lexend_bold" />
+
+        <TextView
+            android:id="@+id/tvCycleLimit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select 0 dates"
+            android:textColor="#A0A8C0"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/lexend" />
+
+        <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+            android:id="@+id/calendarManualCycle"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginTop="16dp"
+            app:mcv_selectionColor="#3B82F6"
+            app:mcv_showOtherDates="none"
+            app:mcv_arrowColor="#FFFFFF"
+            app:mcv_headerTextAppearance="@style/CalendarWhiteText"
+            app:mcv_weekDayTextAppearance="@style/CalendarWhiteTextSmall"
+            app:mcv_dateTextAppearance="@style/CalendarWhiteTextSmall" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmCycle"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:text="Confirm and Start Cycle"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -19,71 +19,143 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/etProfileName"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Full Name"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/baseline_person_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
 
-        <EditText
-            android:id="@+id/etProfilePhone"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Phone"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileName"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Full Name"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0"
+                android:inputType="textPersonName" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
-            android:id="@+id/etProfileDOB"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Date of Birth (DD/MM/YYYY)"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/baseline_phone_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
 
-        <EditText
-            android:id="@+id/etProfileAddress"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Address"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfilePhone"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Phone"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
-            android:id="@+id/etProfileProfession"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Profession"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/outline_calendar_month_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
 
-        <EditText
-            android:id="@+id/etProfileQualification"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileDOB"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Date of Birth"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0"
+                android:focusable="false"
+                android:clickable="true"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/custom_edittext"
-            android:hint="Qualification"
-            android:paddingStart="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#7E89B0" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/baseline_search_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileAddress"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Address"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0"
+                android:inputType="textPostalAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/outline_school_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileProfession"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Profession"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/outline_book_24"
+            app:startIconTint="#7E89B0"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileQualification"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/custom_edittext"
+                android:hint="Qualification"
+                android:paddingStart="40dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7E89B0" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilBloodGroup"
@@ -93,7 +165,9 @@
             android:layout_marginTop="12dp"
             android:hint="Blood Group (Optional)"
             android:textColorHint="#7E89B0"
-            app:hintTextColor="#3B82F6">
+            app:hintTextColor="#3B82F6"
+            app:startIconDrawable="@drawable/baseline_info_24"
+            app:startIconTint="#7E89B0">
 
             <AutoCompleteTextView
                 android:id="@+id/etProfileBloodGroup"
@@ -113,7 +187,7 @@
 
         <RadioGroup
             android:id="@+id/rgProfileGender"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal">

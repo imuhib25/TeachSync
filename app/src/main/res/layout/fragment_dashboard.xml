@@ -64,11 +64,23 @@
                 </LinearLayout>
 
                 <ImageView
+                    android:id="@+id/btn_tutorial"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/circle_bg"
+                    android:padding="11dp"
+                    android:src="@drawable/outline_help_24"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:tint="#FFFFFF" />
+
+                <ImageView
                     android:id="@+id/btn_notifications"
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:background="@drawable/circle_bg"
                     android:padding="11dp"
+                    android:layout_marginStart="8dp"
                     android:src="@drawable/outline_notifications_24"
                     android:clickable="true"
                     android:focusable="true"
@@ -193,6 +205,88 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
+            <!-- Ongoing Class Section -->
+            <LinearLayout
+                android:id="@+id/layoutOngoingClass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:text="Ongoing Class"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#2D3B82"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="#3F51B5"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/circle_bg_white_alpha"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_clock"
+                            app:tint="#FFFFFF" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvOngoingClassName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/lexend_bold"
+                                android:text="Batch Alpha - Physics"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvOngoingClassTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/lexend"
+                                android:text="Ends in 45 mins"
+                                android:textColor="#C7D2FF"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnViewOngoing"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/lexend_medium"
+                            android:text="View"
+                            android:textAllCaps="false"
+                            android:textColor="#FFFFFF" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
             <!-- Monthly Earnings Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -254,6 +348,103 @@
                         android:backgroundTint="#10152C"/>
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Upcoming Classes Section -->
+            <LinearLayout
+                android:id="@+id/layoutUpcomingClasses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Upcoming Classes"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/lexend_bold"/>
+
+                    <TextView
+                        android:id="@+id/btnViewUpcomingAll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="View Schedule"
+                        android:textColor="#3B82F6"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="@font/lexend_medium"
+                        android:padding="4dp"/>
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvUpcomingClasses"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
+
+            <!-- Active Batches Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Active Batches"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/lexend_bold"/>
+
+                    <TextView
+                        android:id="@+id/btnViewAllBatches"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="View All"
+                        android:textColor="#3B82F6"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="@font/lexend_medium"
+                        android:padding="4dp"/>
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvActiveBatches"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_batch_card"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
 
             <include
                 layout="@layout/layout_ad_placeholder"

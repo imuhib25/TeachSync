@@ -173,11 +173,12 @@
                         </LinearLayout>
 
                         <Button
+                            android:id="@+id/remove_ads"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:backgroundTint="#5667FF"
                             android:text="Buy Now"
                             android:textAllCaps="false"
-                            android:backgroundTint="#5667FF"
                             android:textColor="#FFFFFF" />
                     </LinearLayout>
 

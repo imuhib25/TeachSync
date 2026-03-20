@@ -74,10 +74,7 @@ public class SubjectsActivity extends AppCompatActivity {
 
         // Initialize and load Banner Ad
         mAdView = findViewById(R.id.adView);
-        if (mAdView != null) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
+        AdManager.initAd(this, mAdView);
 
         recyclerView = findViewById(R.id.recyclerViewSubs);
         fab = findViewById(R.id.fabAddSub);

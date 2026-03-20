@@ -67,6 +67,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private String userId;
+    private Button removeAds;
 
     private static final String PREF_NAME = "AppPrefs";
     private static final String KEY_CURRENCY = "currency_symbol";
@@ -74,6 +75,7 @@ public class ProfileFragment extends Fragment {
     private static final String KEY_SOUND = "sound_enabled";
     private static final String KEY_THEME = "app_theme";
     private static final String KEY_LANGUAGE = "app_language";
+    private static final String KEY_ADS_REMOVED = "ads_removed";
     private static final String CHANNEL_ID = "profile_reminder";
 
     @Override
@@ -93,11 +95,13 @@ public class ProfileFragment extends Fragment {
         profileNotification = view.findViewById(R.id.profile_notification);
         profileContact = view.findViewById(R.id.profile_contact);
         profileHelp = view.findViewById(R.id.profile_help);
-        profileAboutFooter = view.findViewById(R.id.profile_about_footer); 
+        profileAboutFooter = view.findViewById(R.id.profile_about_footer);
+        removeAds = view.findViewById(R.id.remove_ads);
 
         profileHelp.setOnClickListener(v -> showHelpDialog());
         profileContact.setOnClickListener(v -> showContactDialog());
         profileNotification.setOnClickListener(v -> showNotificationDialog());
+
         profileSecurity.setOnClickListener(v -> showSecurityDialog());
 
         settingsBtn.setOnClickListener(v -> showSettingsDialog());
@@ -107,7 +111,7 @@ public class ProfileFragment extends Fragment {
         logoutBtn.setOnClickListener(v -> showLogoutDialog());
 
         layoutProfileImage.setOnClickListener(v -> showAvatarDialog());
-
+        removeAds.setOnClickListener(v -> showRemoveAdsDialog() );
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
 
@@ -129,7 +133,18 @@ public class ProfileFragment extends Fragment {
                             Glide.with(this).load(avatarUrl).circleCrop().into(profileImage);
                         }
                     }
-                    
+
+                    // Ads Removal logic
+                    Boolean isAdsRemoved = documentSnapshot.getBoolean("remove_ads");
+                    if (isAdsRemoved != null && isAdsRemoved) {
+                        removeAds.setVisibility(View.GONE);
+                        // Sync with SharedPreferences
+                        SharedPreferences prefs = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+                        prefs.edit().putBoolean(KEY_ADS_REMOVED, true).apply();
+                    } else {
+                        removeAds.setVisibility(View.VISIBLE);
+                    }
+
                     checkProfileCompleteness(documentSnapshot);
                 }
             });
@@ -154,16 +169,16 @@ public class ProfileFragment extends Fragment {
             address == null || address.isEmpty() ||
             profession == null || profession.isEmpty() ||
             qualification == null || qualification.isEmpty()) {
-            
+
             sendProfileIncompleteNotification();
         }
     }
 
     private void sendProfileIncompleteNotification() {
         if (getContext() == null) return;
-        
+
         NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Profile Reminders", NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
@@ -183,7 +198,7 @@ public class ProfileFragment extends Fragment {
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_avatar_selection);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        
+
         Window window = dialog.getWindow();
         if (window != null) {
             WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
@@ -278,15 +293,21 @@ public class ProfileFragment extends Fragment {
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_help);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        
+
         dialog.findViewById(R.id.btnHelpClose).setOnClickListener(v -> dialog.dismiss());
         dialog.findViewById(R.id.tvFAQ).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://teachsync.com/faq"));
             startActivity(intent);
         });
         dialog.findViewById(R.id.tvGuidelines).setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://teachsync.com/guidelines"));
+            Intent intent = new Intent(getActivity(), TutorialActivity.class);
             startActivity(intent);
+            dialog.dismiss();
+        });
+        dialog.findViewById(R.id.tvTutorial).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), TutorialActivity.class);
+            startActivity(intent);
+            dialog.dismiss();
         });
         dialog.findViewById(R.id.tvReportProblem).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_SENDTO);
@@ -294,7 +315,7 @@ public class ProfileFragment extends Fragment {
             intent.putExtra(Intent.EXTRA_SUBJECT, "Report a Problem - TeachSync");
             startActivity(intent.createChooser(intent, "Send email..."));
         });
-        
+
         dialog.show();
     }
 
@@ -381,20 +402,34 @@ public class ProfileFragment extends Fragment {
         dialog.setContentView(R.layout.dialog_personal_info);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+            layoutParams.copyFrom(window.getAttributes());
+            layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+            window.setAttributes(layoutParams);
+        }
+
+
         EditText etName = dialog.findViewById(R.id.etProfileName);
         EditText etPhone = dialog.findViewById(R.id.etProfilePhone);
         EditText etDOB = dialog.findViewById(R.id.etProfileDOB);
         EditText etAddress = dialog.findViewById(R.id.etProfileAddress);
         EditText etProfession = dialog.findViewById(R.id.etProfileProfession);
+
         EditText etQualification = dialog.findViewById(R.id.etProfileQualification);
+
         AutoCompleteTextView etBloodGroup = dialog.findViewById(R.id.etProfileBloodGroup);
         RadioGroup rgGender = dialog.findViewById(R.id.rgProfileGender);
         Button btnUpdate = dialog.findViewById(R.id.btnUpdateProfile);
         Button btnCancel = dialog.findViewById(R.id.btnCancelProfile);
 
+
         String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, bloodGroups);
         etBloodGroup.setAdapter(adapter);
+
+
 
         firestore.collection("users").document(userId).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
@@ -403,9 +438,13 @@ public class ProfileFragment extends Fragment {
                 etDOB.setText(doc.getString("dob"));
                 etAddress.setText(doc.getString("address"));
                 etProfession.setText(doc.getString("profession"));
+
                 etQualification.setText(doc.getString("qualification"));
+
                 etBloodGroup.setText(doc.getString("bloodGroup"), false);
                 
+                String avatarUrl = doc.getString("avatarUrl");
+
                 String gender = doc.getString("gender");
                 if ("Male".equals(gender)) rgGender.check(R.id.rbMale);
                 else if ("Female".equals(gender)) rgGender.check(R.id.rbFemale);
@@ -413,7 +452,8 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        etDOB.setFocusable(false);
+
+
         etDOB.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
             DatePickerDialog dpd = new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
@@ -429,7 +469,9 @@ public class ProfileFragment extends Fragment {
             String dob = etDOB.getText().toString();
             String address = etAddress.getText().toString();
             String profession = etProfession.getText().toString();
+
             String qualification = etQualification.getText().toString();
+
             String bloodGroup = etBloodGroup.getText().toString();
             
             int checkedId = rgGender.getCheckedRadioButtonId();
@@ -450,7 +492,9 @@ public class ProfileFragment extends Fragment {
             updates.put("gender", gender);
             updates.put("address", address);
             updates.put("profession", profession);
+
             updates.put("qualification", qualification);
+
             updates.put("bloodGroup", bloodGroup);
 
             firestore.collection("users").document(userId).update(updates)
@@ -504,6 +548,93 @@ public class ProfileFragment extends Fragment {
         
         dialog.findViewById(R.id.btnSettingsClose).setOnClickListener(v -> dialog.dismiss());
         
+        dialog.show();
+    }
+
+    private void showRemoveAdsDialog() {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.setContentView(R.layout.dialog_remove_ads);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+            layoutParams.copyFrom(window.getAttributes());
+            layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+            window.setAttributes(layoutParams);
+        }
+
+        View cardBuy = dialog.findViewById(R.id.card_buy_google_play);
+        EditText etPromo = dialog.findViewById(R.id.etPromoCode);
+        Button btnApply = dialog.findViewById(R.id.btnApplyPromo);
+        Button btnCancel = dialog.findViewById(R.id.btnRemoveAdsCancel);
+
+        cardBuy.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Redirecting to Google Play...", Toast.LENGTH_SHORT).show();
+            // Implement billing flow here
+        });
+
+        btnApply.setOnClickListener(v -> {
+
+            String enteredCode = etPromo.getText().toString().trim().toUpperCase();
+
+            if (enteredCode.isEmpty()) {
+                etPromo.setError("Please enter a promo code");
+                return;
+            }
+
+            firestore.collection("users")
+                    .document(userId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+
+                        if (documentSnapshot.exists()) {
+
+                            String firebaseCode = documentSnapshot.getString("promocode");
+
+                            if (firebaseCode != null && firebaseCode.equalsIgnoreCase(enteredCode)) {
+
+                                // Update Firebase remove_ads = true
+                                firestore.collection("users")
+                                        .document(userId)
+                                        .update("remove_ads", true)
+                                        .addOnSuccessListener(aVoid -> {
+
+                                            // Save locally
+                                            SharedPreferences prefs = requireContext()
+                                                    .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
+                                            prefs.edit().putBoolean(KEY_ADS_REMOVED, true).apply();
+
+                                            Toast.makeText(getContext(),
+                                                    "Promo code applied! Ads removed.",
+                                                    Toast.LENGTH_LONG).show();
+
+                                            dialog.dismiss();
+
+                                        })
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(getContext(),
+                                                        "Failed to update account",
+                                                        Toast.LENGTH_SHORT).show());
+
+                            } else {
+
+                                Toast.makeText(getContext(),
+                                        "Invalid promo code",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "Error verifying promo code",
+                                    Toast.LENGTH_SHORT).show());
+
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
